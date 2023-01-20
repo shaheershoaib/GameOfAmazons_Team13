@@ -1,4 +1,4 @@
-# GameOfAmazons_Team13
+# Game of Amazons - Team 13
 
 Team Members:
 1. Shaheer Shoaib
