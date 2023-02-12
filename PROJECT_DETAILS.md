@@ -1,7 +1,7 @@
 # Guidelines and Evaluation
 The project is worth 30% of the overall grade. All components of the project are worth a certain percent of the project mark:
 - [X] Team Organization: 5%
-- [ ] Warm-up Demos: 10%
+- [X] Warm-up Demos: 10%
 - [ ] Progress Report: 15%
 - [ ] Demo (via tournament participation): 35%
 - [ ] Report and Implementation (techniques implemented and software-engineering aspects): 35%
