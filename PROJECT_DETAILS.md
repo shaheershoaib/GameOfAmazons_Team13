@@ -2,6 +2,9 @@
 The project is worth 30% of the overall grade. All components of the project are worth a certain percent of the project mark:
 - [X] Team Organization: 5%
 - [X] Warm-up Demos: 10%
+- [ ] UML Diagram
+- [ ] Check for Client-Server Commmunication
+- [ ] Ability to start the game as both Black/White
 - [ ] Progress Report: 15%
 - [ ] Demo (via tournament participation): 35%
 - [ ] Report and Implementation (techniques implemented and software-engineering aspects): 35%
