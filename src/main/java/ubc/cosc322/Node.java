@@ -53,16 +53,16 @@ public class Node
         }
 
         if(this.terminal != 0) // isTerminal() returns a value of 0 to indicate a node is not a terminal node. Hence, if it isn't, it is clearly a terminal node
-            return this.terminal;
+            return this.terminal; // terminal holds the value of who won. For example, if the value is 1, then white won. If the value is 2, then black won.
+                                    // This is recursively returned to check if the nodes along the path of the rollout had won.
 
         else
         {
             node.rollouts++; // Increment the number of rollouts on the current node
 
-            Node randomNodeFromChildQueue;
-            if(childrenAsList == null)
-                randomNodeFromChildQueue = peekRandom(node.children); // Get a random child from the priority queue
-            else randomNodeFromChildQueue = peekRandom();
+            if(childrenAsList == null) // childrenAsList holds the nodes in priority queue, "children", as a direct copy. This allows us to choose a random child
+                copyChildrenInPriorityQueueToArrayList(node.children); // If the Queue has not yet been copied over to the ArrayList, meaning this is first time we're visiting this node, copy it over, and save it
+            Node randomNodeFromChildQueue = peekRandom();
 
             int winner =  doRollout(randomNodeFromChildQueue, node.rollouts); // Do a rollout, and return the winner
             if(winner == node.playerType) // If the winner was the type of the current node:
@@ -75,19 +75,10 @@ public class Node
         }
     }
 
-
-    public Node peekRandom(PriorityQueue<Node> queue)
-    {
-        // Create a list to hold the elements from the priority queue
+    public void copyChildrenInPriorityQueueToArrayList(PriorityQueue<Node> queue){
         this.childrenAsList = new ArrayList<>(queue);
-
-        // Get a random index from the list
-        Random random = new Random();
-        int index = random.nextInt(this.childrenAsList.size());
-
-        // Return the element at the random index
-        return this.childrenAsList.get(index);
     }
+
 
     public Node peekRandom()
     {
