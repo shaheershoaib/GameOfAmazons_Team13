@@ -6,10 +6,12 @@ public class Action {
     private int[] queenPositionCurrent= new int[2];
     private int[] queenPositionNew= new int[2];
     private int[] arrowPosition= new int[2];
-    Action(int[] queenPositionCurrent,int[] queenPositionNew, int[] arrowPosition){
+    private int id;
+    Action(int[] queenPositionCurrent,int[] queenPositionNew, int[] arrowPosition, int id){
         this.arrowPosition=arrowPosition;
         this.queenPositionCurrent=queenPositionCurrent;
         this.queenPositionNew=queenPositionNew;
+        this.id = id;
     }
 
     public int[] getArrowPosition() {
@@ -22,5 +24,10 @@ public class Action {
 
     public int[] getQueenPositionNew() {
         return queenPositionNew;
+    }
+
+    public int getId()
+    {
+        return id;
     }
 }

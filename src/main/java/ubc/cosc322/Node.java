@@ -9,7 +9,7 @@ public class Node
    private int totalWins;
    private final int playerType; // 1 == White, 2 == Black
 
-   public PriorityQueue<Node> children;
+    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score));
    List<Node> childrenAsList;
    HashMap<Integer, Node> currentChildren;
     private double ucb1Score;
@@ -17,7 +17,31 @@ public class Node
     private final int[] queenCurrent;
     private final int[] queenNew;
     private final int[] arrowPosition;
-    public int id;
+    private int id;
+
+    public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition, int id, int op)
+    {
+        this.state = state;
+        this.playerType = playerType;
+        this.ucb1Score = Double.POSITIVE_INFINITY; // Let an unexplored node have a default value of Positive Infinity, as nodes that haven't been generated should have a high priority.
+        this.terminal = -1; // There is no way to tell at the moment if this node is a terminal node or not. So, set it to -1
+        this.queenCurrent = queenCurrent;
+        this.queenNew = queenNew;
+        this.arrowPosition = arrowPosition;
+        this.id = 0;
+        currentChildren = new HashMap<>();
+
+        //Get actions
+        ActionFactory actions = new ActionFactory(this.state, this.playerType);
+        ArrayList<Action> actionArrayList = new ArrayList<>();
+        actionArrayList = actions.getActions();
+
+
+
+        for(Action action: actionArrayList)
+            children.add(createNode(action, this));
+
+    }
 
     public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition, int id)
     {
@@ -30,6 +54,8 @@ public class Node
         this.arrowPosition = arrowPosition;
         this.id = 0;
         currentChildren = new HashMap<>();
+
+
     }
 
     public double getAverageWins(){
@@ -43,14 +69,13 @@ public class Node
 
     public void doRollout()
     {
-    printArray(state);
+    //printArray(state);
         if(this.terminal == -1)
         {
 
-            ActionFactory actions = new ActionFactory(this.state, this.playerType);
-            this.children = actions.getActions();
             if (this.children.size() == 0)
             {
+
                 if (this.playerType == 1)
                     this.terminal = 2;
                  else this.terminal = 1;
@@ -62,17 +87,11 @@ public class Node
 
         if(this.terminal==0) //Rollout on current node it isn't terminal
         {
-            this.rollouts++;
 
-            if (children == null)
-            {
-                ActionFactory actions = new ActionFactory(state, playerType);
-                children = actions.getActions();
-            }
             Node nodeWithHighestUCB1Score = children.peek(); // We only use peek() as we don't actually want the node to be removed
 
-
             doRollout(nodeWithHighestUCB1Score, rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
+           ;
         }                                     // in order to update totalWins of descendant nodes
 
     }
@@ -80,13 +99,15 @@ public class Node
     private int doRollout(Node node, int numRolloutsOnParent)
     {
 
-printArray(node.state);
+        ActionFactory actions = new ActionFactory(node.state, node.playerType);
+        ArrayList<Action> actionArrayList = actions.getActions();
+
+       // printArray(node.state);
         if(node.terminal==-1) // If the value to check if whether a node is a terminal node or not, then call the method to find it.
                             // Saving the result in a terminal variable will save time when checking if a node is a terminal node IF the node has already been visited
         {
-            ActionFactory actions = new ActionFactory(node.state, node.playerType);
-            node.children = actions.getActions();
-            if(node.children.size() == 0)
+
+            if(actionArrayList.size() == 0)
             {
                 if (node.playerType == 1)
                     node.terminal = 2;
@@ -94,9 +115,8 @@ printArray(node.state);
             }
             else node.terminal = 0;
 
-
         }
-        System.out.println(node.terminal);
+      //  System.out.println(node.terminal);
 
 
         if(node.terminal != 0) // isTerminal() returns a value of 0 to indicate a node is not a terminal node. Hence, if it isn't, it is clearly a terminal node
@@ -106,24 +126,28 @@ printArray(node.state);
         else
         {
             node.rollouts++; // Increment the number of rollouts on the current node
-        if(node.children == null)
-        {
-            ActionFactory actions = new ActionFactory(node.state, node.playerType);
-            node.children = actions.getActions();
-            actions = null;
-        }
-            if(node.childrenAsList == null) // childrenAsList holds the nodes in priority queue, "children", as a direct copy. This allows us to choose a random child
-                copyChildrenInPriorityQueueToArrayList(node); // If the Queue has not yet been copied over to the ArrayList, meaning this is first time we're visiting this node, copy it over, and save it
-            Node randomNodeFromChildQueue = peekRandom(node);
-            node.childrenAsList = null;
-            node.children = null;
-            if(currentChildren.containsKey(randomNodeFromChildQueue.id))
-                randomNodeFromChildQueue = currentChildren.get(1);
+
+            int size = actionArrayList.size();
+
+            Random rand = new Random();
+            int randomIndex = rand.nextInt(size);
+
+            Action randomAction = actionArrayList.get(randomIndex);
+            Node newNode;
+
+            if(currentChildren.containsKey(randomAction.getId()))
+                newNode = currentChildren.get(randomAction.getId());
             else
-                currentChildren.put(1, randomNodeFromChildQueue);
+            {
+                newNode = createNode(randomAction, node);
+                currentChildren.put(newNode.getId(), newNode);
+                randomAction = null;
+                actions = null;
+                actionArrayList = null;
+            }
 
 
-            int winner =  doRollout(randomNodeFromChildQueue, node.rollouts); // Do a rollout, and return the winner
+            int winner =  doRollout(newNode, node.rollouts); // Do a rollout, and return the winner
             if(winner == node.playerType) // If the winner was the type of the current node:
             {
                 node.totalWins++;  // increment its wins by 1 (Ex: if white won and the current node is white, then increment its wins by 1)
@@ -134,62 +158,10 @@ printArray(node.state);
         }
     }
 
-    public void copyChildrenInPriorityQueueToArrayList(Node node){
-        node.childrenAsList = new ArrayList<>(node.children);
-    }
-
-
-    public Node peekRandom(Node node)
-    {
-        Random random = new Random();
-        int index = random.nextInt(node.childrenAsList.size());
-
-        // Return the element at the random index
-        return node.childrenAsList.get(index);
-    }
 
 
 
-    public int isTerminal() // Can check the ArrayList of actions
-    {
-        int amazonCantMoveCounter = 0; // If 4 amazons cannot move, then the player has lost
-        boolean availableMoveExists = false;
-        for (int row = 0; row < 10 && amazonCantMoveCounter<4 && !availableMoveExists; row++)
-            for (int col = 0; col < 10 && amazonCantMoveCounter<4 && !availableMoveExists; col++)
-            {
-                if (state[row][col] == playerType) // If the current tile has an amazon of the current playerType (White or Black)
-                {
-                    if
-                    (
-                                    (col != 0 && state[row][col - 1] == 0) || // Left
-                                    (col != 9 && state[row][col + 1] == 0) ||  //Right
-                                    (row != 0 && state[row - 1][col] == 0) || //Top
-                                    (row != 9 && state[row + 1][col] == 0) || //Bottom
-                                    (col != 0 && row != 0 && state[row - 1][col - 1] == 0) || // Top Left
-                                    (col != 9 && row != 0 && state[row - 1][col + 1] == 0) || // Top Right
-                                    (col != 0 && row != 9 && state[row + 1][col - 1] == 0) || // Bottom Left
-                                    (col != 9 && row != 9 && state[row + 1][col + 1] == 0)    // Bottom Right
 
-                    ) {availableMoveExists = true;} // If this if-condition passes, then clearly there is an available move. Hence, we can break the loops
-
-                    else amazonCantMoveCounter++; // If the if-condition fails, then it meant that for the amazon that was being checked had no available move. Hence, increment the count of amazons that don't have a move.
-
-                }
-
-            }
-
-        if(amazonCantMoveCounter == 4)
-        {
-            if(playerType == 1) //If white, return that black won
-                return 2;
-            else if(playerType == 2) //If black, return that white won
-                return 1;
-
-        }
-
-        return 0; // Not a terminal node
-
-    }
 
     public void updateUCB1(int parentRollouts) // Calculate the UCB1 score. Current letting C = sqrt(2)
     {
@@ -249,5 +221,34 @@ printArray(node.state);
         int opponentMoves = actionFactoryOpponent.getActions().size();
 
         return (currentPlayerMoves - opponentMoves) / (double)(currentPlayerMoves + opponentMoves);
+    }
+
+    public Node createNode(Action action, Node node)
+    {
+        int childPlayer;
+        if(node.playerType == 1)
+            childPlayer = 2;
+        else childPlayer = 1;
+
+        int[][] childState = new int[10][10];
+        for (int row = 0; row < 10; row++)
+            for (int col = 0; col<10; col++)
+                childState[row][col] = node.state[row][col];
+
+
+        childState[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
+        childState[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = node.playerType;
+        childState[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = 7;
+       return new Node(childState, childPlayer, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
+    }
+
+    public int getId()
+    {
+        return id;
+    }
+
+    public int getPlayerType()
+    {
+        return playerType;
     }
 }

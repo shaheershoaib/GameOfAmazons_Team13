@@ -18,23 +18,20 @@ public class test {
                 {0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
         };
 
-        Node node = new Node (state, 1, null, null, null, 0);
+        Node node = new Node (state, 1, null, null, null, 0, 1);
 
-        ActionFactory a = new ActionFactory(node.getState(), 1);
-
-        System.out.println(a.getActions().size());
 
         int numRollouts = 0;
 
 
 try
 {
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 10000; i++)
     {
 
         node.doRollout();
         numRollouts++;
-        //System.out.println(numRollouts);
+        System.out.println(numRollouts);
     }
 }
 

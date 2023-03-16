@@ -7,7 +7,7 @@ import java.util.PriorityQueue;
 public class ActionFactory {
 
 
-    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score));
+    public ArrayList<Action> actions= new ArrayList<>();
 
     int[][] state;
 
@@ -19,7 +19,7 @@ public class ActionFactory {
         this.id=0;
 
     }
-    public PriorityQueue<Node> getActions()
+    public ArrayList<Action> getActions()
     {
 //player is 1 or 2
         //number 7 on the board is for arrows
@@ -38,7 +38,7 @@ public class ActionFactory {
         }
 
 
-        return children;
+        return actions;
     }
     private void queensAction(int x, int y,int[][] state){
         int[] queensPositionCurrent= new int[2];
@@ -255,20 +255,11 @@ public class ActionFactory {
         newState[arrowsPosition[0]][arrowsPosition[1]] = 7;
 
 
-        Node child = new Node(newState, newPlayer, queensPositionCurrent, queensPositionNew, arrowsPosition, this.id);
-        children.add(child);
+        Action action = new Action(queensPositionCurrent, queensPositionNew, arrowsPosition, this.id);
+        actions.add(action);
 
     }
 
 
-    public void printActions() {
-        ArrayList<Node> childrenAsList = new ArrayList<>(children);
-        for (int i=0;i<children.size();i++){
-          //  System.out.println(actions.size());
-            Node node= childrenAsList.get(i);
-            System.out.print(node.getQueenCurrent());
-            System.out.print(node.getQueenNew());
-            System.out.println(node.getQueenNew());
-        }
-    }
+
 }
