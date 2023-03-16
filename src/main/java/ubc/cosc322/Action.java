@@ -6,7 +6,7 @@ public class Action {
     private ArrayList queenPositionCurrent= new ArrayList<Integer>(2);
     private ArrayList queenPositionNew= new ArrayList<Integer>(2);
     private ArrayList arrowPosition= new ArrayList<Integer>(2);
-    Action(ArrayList queenPositionCurrent,ArrayList queenPositionNew,ArrayList arrowPosition){
+    Action(ArrayList queenPositionCurrent,ArrayList queenPositionNew,ArrayList arrowPosition, int[][] state){
         this.arrowPosition=arrowPosition;
         this.queenPositionCurrent=queenPositionCurrent;
         this.queenPositionNew=queenPositionNew;

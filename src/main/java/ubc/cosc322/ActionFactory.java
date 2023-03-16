@@ -1,11 +1,14 @@
 package ubc.cosc322;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 public class ActionFactory {
 
 
-    public ArrayList actions=new ArrayList<Action>();
+    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score));
+
     int[][] state;
 
     int player;
@@ -14,7 +17,7 @@ public class ActionFactory {
         this.player=player;
 
     }
-    public ArrayList getActions()
+    public PriorityQueue<Node> getActions()
     {
 //player is 1 or 2
         //number 7 on the board is for arrows
@@ -33,7 +36,7 @@ public class ActionFactory {
         }
 
 
-        return actions;
+        return children;
     }
     private void queensAction(int x, int y,int[][] state){
         int[] queensPositionCurrent= new int[2];
@@ -131,7 +134,14 @@ public class ActionFactory {
     }
     private void arrowsPosition(int[] queensPositionCurrent,int[] queensPositionNew,int[][] state){
         //change the tile to 0 when queen moves
-    state[queensPositionCurrent[0]][queensPositionCurrent[1]]=0;
+        int[][] stateCopy = new int[10][10];
+        for (int row = 0; row < 10; row++) {
+            for (int col = 0; col < 10; col++) {
+                stateCopy[row][col] = state[row][col];
+            }
+        }
+
+    stateCopy[queensPositionCurrent[0]][queensPositionCurrent[1]]=0;
 
         int x=  queensPositionNew[0];
         int y=  queensPositionNew[1];
@@ -146,7 +156,7 @@ public class ActionFactory {
         for (int i=1;i<10;i++) {
             //checks the next down tile to see if something blocks it
             if (down){
-            if ((i+x)==10||state[i+x][y]!=0){down=false;}
+            if ((i+x)==10||stateCopy[i+x][y]!=0){down=false;}
             else {
                 int[] arrowsPosition= new int[2];
                 arrowsPosition[0]=x+i;
@@ -155,7 +165,7 @@ public class ActionFactory {
 
             }}
             if(downRight){
-                if((i+x)==10||(i+y)==10||state[i+x][i+y]!=0){downRight=false;}
+                if((i+x)==10||(i+y)==10||stateCopy[i+x][i+y]!=0){downRight=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x+i;
@@ -164,7 +174,7 @@ public class ActionFactory {
                 }
             }
             if (downLeft){
-                if((i+x)==10||(y-i)==-1||state[i+x][y-i]!=0){downLeft=false;}
+                if((i+x)==10||(y-i)==-1||stateCopy[i+x][y-i]!=0){downLeft=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x+i;
@@ -173,7 +183,7 @@ public class ActionFactory {
                 }
             }
             if (up) {
-                if ((x-i)==-1||state[x-i][y]!=0){up=false;}
+                if ((x-i)==-1||stateCopy[x-i][y]!=0){up=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x-i;
@@ -182,7 +192,7 @@ public class ActionFactory {
                 }
             }
             if (upRight){
-                if ((x-i)==-1||(y+i)==10||state[x-i][y+i]!=0){upRight=false;}
+                if ((x-i)==-1||(y+i)==10||stateCopy[x-i][y+i]!=0){upRight=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x-i;
@@ -191,7 +201,7 @@ public class ActionFactory {
                 }
             }
             if (upLeft){
-                if ((x-i)==-1||(y-i)==-1||state[x-i][y-i]!=0){upLeft=false;}
+                if ((x-i)==-1||(y-i)==-1||stateCopy[x-i][y-i]!=0){upLeft=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x-i;
@@ -200,7 +210,7 @@ public class ActionFactory {
                 }
             }
             if (left){
-                if ((y-i)==-1||state[x][y-i]!=0){left=false;}
+                if ((y-i)==-1||stateCopy[x][y-i]!=0){left=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x;
@@ -209,7 +219,7 @@ public class ActionFactory {
                 }
             }
             if (right){
-                if ((y+i)==10||state[x][y+i]!=0){right=false;}
+                if ((y+i)==10||stateCopy[x][y+i]!=0){right=false;}
                 else {
                     int[] arrowsPosition= new int[2];
                     arrowsPosition[0]=x;
@@ -224,26 +234,37 @@ public class ActionFactory {
     }
     private void addAction(int[] queensPositionCurrent,int[] queensPositionNew,int[] arrowsPosition){
         //can flip 0 and 1 incase x and y are different in the servers cordinate system
-        ArrayList queensPositionCurrentA=new ArrayList<>(2);
-        queensPositionCurrentA.add(queensPositionCurrent[0]);
-        queensPositionCurrentA.add(queensPositionCurrent[1]);
-        ArrayList queensPositionNewA=new ArrayList<>(2);
-        queensPositionNewA.add(queensPositionNew[0]);
-        queensPositionNewA.add(queensPositionNew[1]);
-        ArrayList arrowsPositionA=new ArrayList<>(2);
-        arrowsPositionA.add(arrowsPosition[0]);
-        arrowsPositionA.add(arrowsPosition[1]);
-        actions.add(new Action(queensPositionCurrentA,queensPositionNewA,arrowsPositionA));
+
+        int[][] newState = new int[10][10];
+
+        for(int row=0; row<10; row++)
+            for(int col=0; col<10; col++)
+                newState[row][col] = state[row][col];
+
+        int newPlayer;
+        if(player == 1)
+            newPlayer = 2;
+        else newPlayer = 1;
+
+        newState[queensPositionCurrent[0]][queensPositionCurrent[1]] = 0;
+        newState[queensPositionNew[0]][queensPositionNew[1]] = player;
+        newState[arrowsPosition[0]][arrowsPosition[1]] = 7;
+
+
+        Node child = new Node(newState, newPlayer, queensPositionCurrent, queensPositionNew, arrowsPosition);
+        children.add(child);
+
     }
 
 
     public void printActions() {
-        for (int i=0;i<actions.size();i++){
+        ArrayList<Node> childrenAsList = new ArrayList<>(children);
+        for (int i=0;i<children.size();i++){
           //  System.out.println(actions.size());
-            Action action= (Action) actions.get(i);
-            System.out.print(action.getQueenPositionCurrent());
-            System.out.print(action.getQueenPositionNew());
-            System.out.println(action.getArrowPosition());
+            Node node= childrenAsList.get(i);
+            System.out.print(node.getQueenCurrent());
+            System.out.print(node.getQueenNew());
+            System.out.println(node.getQueenNew());
         }
     }
 }
