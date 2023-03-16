@@ -1,9 +1,6 @@
 package ubc.cosc322;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Random;
+import java.util.*;
 
 public class Node
 {
@@ -14,13 +11,15 @@ public class Node
 
    public PriorityQueue<Node> children;
    List<Node> childrenAsList;
+   HashMap<Integer, Node> currentChildren;
     private double ucb1Score;
     private int terminal; // Save the if the node is a terminal node or not if we're visiting this node again
     private final int[] queenCurrent;
     private final int[] queenNew;
     private final int[] arrowPosition;
+    public int id;
 
-    public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition)
+    public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition, int id)
     {
         this.state = state;
         this.playerType = playerType;
@@ -29,6 +28,8 @@ public class Node
         this.queenCurrent = queenCurrent;
         this.queenNew = queenNew;
         this.arrowPosition = arrowPosition;
+        this.id = 0;
+        currentChildren = new HashMap<>();
     }
 
     public double getAverageWins(){
@@ -42,7 +43,7 @@ public class Node
 
     public void doRollout()
     {
-
+    printArray(state);
         if(this.terminal == -1)
         {
 
@@ -79,7 +80,7 @@ public class Node
     private int doRollout(Node node, int numRolloutsOnParent)
     {
 
-
+printArray(node.state);
         if(node.terminal==-1) // If the value to check if whether a node is a terminal node or not, then call the method to find it.
                             // Saving the result in a terminal variable will save time when checking if a node is a terminal node IF the node has already been visited
         {
@@ -94,9 +95,8 @@ public class Node
             else node.terminal = 0;
 
 
-
-
         }
+        System.out.println(node.terminal);
 
 
         if(node.terminal != 0) // isTerminal() returns a value of 0 to indicate a node is not a terminal node. Hence, if it isn't, it is clearly a terminal node
@@ -115,6 +115,13 @@ public class Node
             if(node.childrenAsList == null) // childrenAsList holds the nodes in priority queue, "children", as a direct copy. This allows us to choose a random child
                 copyChildrenInPriorityQueueToArrayList(node); // If the Queue has not yet been copied over to the ArrayList, meaning this is first time we're visiting this node, copy it over, and save it
             Node randomNodeFromChildQueue = peekRandom(node);
+            node.childrenAsList = null;
+            node.children = null;
+            if(currentChildren.containsKey(randomNodeFromChildQueue.id))
+                randomNodeFromChildQueue = currentChildren.get(1);
+            else
+                currentChildren.put(1, randomNodeFromChildQueue);
+
 
             int winner =  doRollout(randomNodeFromChildQueue, node.rollouts); // Do a rollout, and return the winner
             if(winner == node.playerType) // If the winner was the type of the current node:

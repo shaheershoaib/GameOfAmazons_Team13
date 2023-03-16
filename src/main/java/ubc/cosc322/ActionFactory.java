@@ -12,9 +12,11 @@ public class ActionFactory {
     int[][] state;
 
     int player;
+    int id;
     ActionFactory(int[][] state,int player){
         this.state=state;
         this.player=player;
+        this.id=0;
 
     }
     public PriorityQueue<Node> getActions()
@@ -246,12 +248,14 @@ public class ActionFactory {
             newPlayer = 2;
         else newPlayer = 1;
 
+
+        this.id++;
         newState[queensPositionCurrent[0]][queensPositionCurrent[1]] = 0;
         newState[queensPositionNew[0]][queensPositionNew[1]] = player;
         newState[arrowsPosition[0]][arrowsPosition[1]] = 7;
 
 
-        Node child = new Node(newState, newPlayer, queensPositionCurrent, queensPositionNew, arrowsPosition);
+        Node child = new Node(newState, newPlayer, queensPositionCurrent, queensPositionNew, arrowsPosition, this.id);
         children.add(child);
 
     }
