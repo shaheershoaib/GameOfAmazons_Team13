@@ -9,8 +9,9 @@ public class Node
    private int totalWins;
    private final int playerType; // 1 == White, 2 == Black
 
-    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score));
-   List<Node> childrenAsList;
+    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score).reversed());
+
+    ArrayList<Action> actionArrayList;
    HashMap<Integer, Node> currentChildren;
     private double ucb1Score;
     private int terminal; // Save the if the node is a terminal node or not if we're visiting this node again
@@ -28,9 +29,9 @@ public class Node
         this.queenCurrent = queenCurrent;
         this.queenNew = queenNew;
         this.arrowPosition = arrowPosition;
-        this.id = 0;
+        this.id = id;
         currentChildren = new HashMap<>();
-
+        this.rollouts = 1;
         //Get actions
         ActionFactory actions = new ActionFactory(this.state, this.playerType);
         ArrayList<Action> actionArrayList = new ArrayList<>();
@@ -52,7 +53,7 @@ public class Node
         this.queenCurrent = queenCurrent;
         this.queenNew = queenNew;
         this.arrowPosition = arrowPosition;
-        this.id = 0;
+        this.id = id;
         currentChildren = new HashMap<>();
 
 
@@ -88,10 +89,12 @@ public class Node
         if(this.terminal==0) //Rollout on current node it isn't terminal
         {
 
-            Node nodeWithHighestUCB1Score = children.peek(); // We only use peek() as we don't actually want the node to be removed
+            Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
 
             doRollout(nodeWithHighestUCB1Score, rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
-           ;
+            children.add(nodeWithHighestUCB1Score);
+
+
         }                                     // in order to update totalWins of descendant nodes
 
     }
@@ -99,15 +102,19 @@ public class Node
     private int doRollout(Node node, int numRolloutsOnParent)
     {
 
-        ActionFactory actions = new ActionFactory(node.state, node.playerType);
-        ArrayList<Action> actionArrayList = actions.getActions();
+        if(node.actionArrayList == null)
+        {
+            ActionFactory actions = new ActionFactory(node.state, node.playerType);
+            node.actionArrayList = actions.getActions();
+        }
 
-       // printArray(node.state);
+
+        //printArray(node.state);
         if(node.terminal==-1) // If the value to check if whether a node is a terminal node or not, then call the method to find it.
                             // Saving the result in a terminal variable will save time when checking if a node is a terminal node IF the node has already been visited
         {
 
-            if(actionArrayList.size() == 0)
+            if(node.actionArrayList.size() == 0)
             {
                 if (node.playerType == 1)
                     node.terminal = 2;
@@ -116,7 +123,7 @@ public class Node
             else node.terminal = 0;
 
         }
-      //  System.out.println(node.terminal);
+        //System.out.println(node.terminal);
 
 
         if(node.terminal != 0) // isTerminal() returns a value of 0 to indicate a node is not a terminal node. Hence, if it isn't, it is clearly a terminal node
@@ -127,23 +134,21 @@ public class Node
         {
             node.rollouts++; // Increment the number of rollouts on the current node
 
-            int size = actionArrayList.size();
+            int size = node.actionArrayList.size();
 
             Random rand = new Random();
             int randomIndex = rand.nextInt(size);
 
-            Action randomAction = actionArrayList.get(randomIndex);
+            Action randomAction = node.actionArrayList.get(randomIndex);
             Node newNode;
 
-            if(currentChildren.containsKey(randomAction.getId()))
-                newNode = currentChildren.get(randomAction.getId());
+            if(node.currentChildren.containsKey(randomAction.getId()))
+                newNode = node.currentChildren.get(randomAction.getId());
             else
             {
                 newNode = createNode(randomAction, node);
-                currentChildren.put(newNode.getId(), newNode);
+                node.currentChildren.put(newNode.getId(), newNode);
                 randomAction = null;
-                actions = null;
-                actionArrayList = null;
             }
 
 
@@ -152,7 +157,9 @@ public class Node
             {
                 node.totalWins++;  // increment its wins by 1 (Ex: if white won and the current node is white, then increment its wins by 1)
             }
+
             node.updateUCB1(numRolloutsOnParent); // Ensure that the current node has its UCB1 score updated
+
             return winner; // Continue to return the winner through the recursive call stack
 
         }
@@ -161,14 +168,14 @@ public class Node
 
 
 
-
-
     public void updateUCB1(int parentRollouts) // Calculate the UCB1 score. Current letting C = sqrt(2)
     {
+
         double c = Math.sqrt(2);
         int nodeRollouts = this.rollouts;
         double explorationTerm = c * Math.sqrt(Math.log(parentRollouts) / nodeRollouts);
         this.ucb1Score = getAverageWins() + explorationTerm;
+
     }
 
 

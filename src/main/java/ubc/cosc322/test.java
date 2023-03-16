@@ -1,5 +1,6 @@
 package ubc.cosc322;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
@@ -24,22 +25,34 @@ public class test {
         int numRollouts = 0;
 
 
-try
-{
-    for (int i = 0; i < 10000; i++)
+
+    for (int i = 0; i < 4000; i++)
     {
 
+
         node.doRollout();
-        numRollouts++;
-        System.out.println(numRollouts);
+      //  numRollouts++;
+       // System.out.println(numRollouts);
     }
+
+        System.out.println("At the end, Node ID: "+node.children.peek().getId());
+        System.out.println("At the end, Node UCB1: "+node.children.peek().getUcb1Score());
+
+
+
+
+        int size = node.children.size();
+for(int i=0; i<size; i++)
+{
+    Node banana = node.children.poll();
+    //System.out.println("Node ID: "+banana.getId());
+    //System.out.println("\tNode UCB1: "+node.getUcb1Score());
 }
 
-catch(OutOfMemoryError e){System.out.println(numRollouts);}
-
-/*
-        int[][] x = node.children.poll().getState();
-
+    /*
+        Node y = node.children.poll();
+        int[][] x = y.getState();
+        System.out.println("ID: "+y.getId());
         for (int row = 0; row < 10; row++)
         {
             for (int col = 0; col < 10; col++)
@@ -48,7 +61,9 @@ catch(OutOfMemoryError e){System.out.println(numRollouts);}
             }
             System.out.println();
         }
-        */
+*/
+
+
 
         /*
 ActionFactory actions= new ActionFactory(state,1);
