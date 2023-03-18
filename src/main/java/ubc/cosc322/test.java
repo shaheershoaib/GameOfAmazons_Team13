@@ -26,7 +26,7 @@ public class test {
 
 
 
-    for (int i = 0; i < 4000; i++)
+    for (int i = 0; i < 2600; i++)
     {
 
 
@@ -45,32 +45,16 @@ public class test {
 for(int i=0; i<size; i++)
 {
     Node banana = node.children.poll();
-    //System.out.println("Node ID: "+banana.getId());
-    //System.out.println("\tNode UCB1: "+node.getUcb1Score());
-}
+    System.out.println("Node ID: "+banana.getId());
+    System.out.println("\tNode UCB1: "+node.getUcb1Score());
 
-    /*
-        Node y = node.children.poll();
-        int[][] x = y.getState();
-        System.out.println("ID: "+y.getId());
-        for (int row = 0; row < 10; row++)
-        {
-            for (int col = 0; col < 10; col++)
-            {
-                System.out.print(x[row][col]+" ");
-            }
-            System.out.println();
+    for (int j = 0; j < 3000; j++) {
+        if(banana.currentChildren.containsKey(j)) {
+            System.out.println("\tChild of root node child Value: "+banana.currentChildren.get(j).getUcb1Score());
+            break;
         }
-*/
-
-
-
-        /*
-ActionFactory actions= new ActionFactory(state,1);
-PriorityQueue<Node> a= actions.getActions();
-actions.printActions();
-System.out.println(a.size());
-*/
+    }
+}
 
 
 

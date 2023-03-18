@@ -1,4 +1,5 @@
 package ubc.cosc322;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -6,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -15,69 +17,63 @@ import ygraph.ai.smartfox.games.GameClient;
 import ygraph.ai.smartfox.games.GameMessage;
 import ygraph.ai.smartfox.games.GamePlayer;
 import ygraph.ai.smartfox.games.amazons.AmazonsGameMessage;
-public class COSC322Test extends GamePlayer
-{
 
-	private GameClient gameClient = null; 
-    private BaseGameGUI gamegui = null;
-	
-    private String userName = null;
-    private String passwd = null;
+public class COSC322Test extends GamePlayer {
 
-		private int blackQueen = 2;
-		private int whiteQueen = 1;
-		private int arrow = 8;
-		private int myQueen = -1;
+	private GameClient gameClient = null;
+	private BaseGameGUI gamegui = null;
 
-		private int[][] board = null;
-		static Node currentNode = null;
+	private String userName = null;
+	private String passwd = null;
 
-		static class MyTimerTask extends TimerTask {
-			@Override
-			public void run() {
-				while(true){
-					currentNode.doRollout();
+	private final int blackQueen = 2;
+	private final int whiteQueen = 1;
+	private final int ARROW = 7;
+	private int myQueen = -1;
+
+	private int[][] board = null;
+	static Node currentNode = null;
+
+	private ArrayList<Integer> opponentOriginalQueenPosition, opponentNewQueenPosition, opponentArrowPosition;
+	private ArrayList<Action> allPossibleActionsFromCurrentNode;
+	private Action opponentAction;
+
+
+
+	public static void main(String[] args) {
+		COSC322Test player = new COSC322Test(args[0], args[1]);
+
+		if (player.getGameGUI() == null) {
+			player.Go();
+		} else {
+			BaseGameGUI.sys_setup();
+			java.awt.EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					player.Go();
 				}
-			}
+			});
 		}
-    
-	public static void main(String[] args)
-	{
-    	COSC322Test player = new COSC322Test(args[0], args[1]);
-    	
-    	if(player.getGameGUI() == null) {
-    		player.Go();
-    	}
-    	else {
-    		BaseGameGUI.sys_setup();
-            java.awt.EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                	player.Go();
-                }
-            });
-    	}
-    }
-	
+	}
+
 	/**
-     * Any name and passwd 
-     * @param userName
-      * @param passwd
-     */
-    public COSC322Test(String userName, String passwd) 
-    {
-    	this.userName = userName;
-    	this.passwd = passwd;
-			this.board = new int[10][10];
-    	
-    	//To make a GUI-based player, create an instance of BaseGameGUI
-    	//and implement the method getGameGUI() accordingly
-    	this.gamegui = new BaseGameGUI(this);
-    }
-	
+	 * Any name and passwd
+	 * 
+	 * @param userName
+	 * @param passwd
+	 */
+	public COSC322Test(String userName, String passwd) {
+		this.userName = userName;
+		this.passwd = passwd;
+		this.board = new int[10][10];
+
+		// To make a GUI-based player, create an instance of BaseGameGUI
+		// and implement the method getGameGUI() accordingly
+		this.gamegui = new BaseGameGUI(this);
+	}
+
 	@Override
-	public void connect() 
-	{
-    	gameClient = new GameClient(userName, passwd, this);
+	public void connect() {
+		gameClient = new GameClient(userName, passwd, this);
 	}
 
 	@Override
@@ -93,154 +89,55 @@ public class COSC322Test extends GamePlayer
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean handleGameMessage(String messageType, Map<String, Object> msgDetails) {
-		//This method will be called by the GameClient when it receives a game-related message
-    	//from the server.
-	
-    	//For a detailed description of the message types and format, 
-    	//see the method GamePlayer.handleGameMessage() in the game-client-api document. 
-    	//System.out.println(messageType);
-    	//System.out.println(msgDetails);
-    	
-    	switch(messageType) 
-    	{
-    	case GameMessage.GAME_STATE_BOARD:
-				@SuppressWarnings("unused") ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
-				this.gamegui.setGameState(board);
-    		break;
-			case GameMessage.GAME_ACTION_START:
-				@SuppressWarnings("unused") String playingWhiteQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_WHITE);
-				@SuppressWarnings("unused") String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
-				assert(!playingWhiteQueens.equals(playingBlackQueens));
-				setMyQueen(playingWhiteQueens);
-				currentNode = new Node (this.board, myQueen, null, null, null, 0, 1);
-				
-					Timer timer = new Timer();
-					MyTimerTask timerTask = new MyTimerTask();
-					if(myQueen == 1)
-					{
-					
-			
-					// Schedule the timer task to run every 1000 milliseconds (1 second)
-					timer.schedule(timerTask, 0, 1000);
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					timer.cancel();
+		// This method will be called by the GameClient when it receives a game-related
+		// message
+		// from the server.
 
-					currentNode = currentNode.children.poll();
-					ArrayList<Integer> queenCurrente= new ArrayList<Integer>();
-					ArrayList<Integer> queenNewe = new ArrayList<Integer>();
-					ArrayList<Integer> arrowPose = new ArrayList<Integer>();
+		// For a detailed description of the message types and format,
+		// see the method GamePlayer.handleGameMessage() in the game-client-api
+		// document.
 
-					for (int i = 0; i < this.board.length; i++) {
-						queenCurrente.add(currentNode.getQueenCurrent()[i]);
-						queenNewe.add(currentNode.getQueenNew()[i]);
-						arrowPose.add(currentNode.getArrowPosition()[i]);
-					}
-					
-					
-					this.gamegui.updateGameState(queenCurrente, queenNewe, arrowPose);
-					
-					// Schedule the timer task to run every 1000 milliseconds (1 second)
-					
-
-					}
-					
-
-
-					
-				break;
-    	case GameMessage.GAME_ACTION_MOVE:
-				// GET OPPONENTS ACTION
-				// oppositionMoveHandler(msgDetails);
-				ArrayList<Integer> queenCurrent = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_CURR);
-				ArrayList<Integer> queenNew = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_NEXT);
-				ArrayList<Integer> arrowPos = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.ARROW_POS);
-
-				ArrayList<Action> currentNodeActions = currentNode.actionArrayList;
-				for(Action action: currentNodeActions)
-				{
-					if( (action.getQueenPositionCurrent()[0] == queenCurrent.get(0) && action.getQueenPositionCurrent()[1] == queenCurrent.get(1) && action.getQueenPositionNew()[0] == queenNew.get(0) && action.getQueenPositionNew()[1] == queenNew.get(1) && action.getArrowPosition()[0] == arrowPos.get(0) && action.getArrowPosition()[1] == arrowPos.get(1)) )
-					{
-						Node child = currentNode.currentChildren.get(action.getId());
-						if(child !=null)
-						{			
-							currentNode = child;
-							//Get currentNode's action
-							ActionFactory actionFactory = new ActionFactory(currentNode.getState(), currentNode.getPlayerType());
-							ArrayList<Action> childActions = actionFactory.getActions();
-							for(Action actionOfChild: childActions)
-							{
-								
-								Node childOfChild = currentNode.currentChildren.get(actionOfChild.getId());
-									if(childOfChild !=null)
-										child.children.add(childOfChild);
-									 else
-									 {
-										child.children.add(createChildNode(actionOfChild, child));
-									 }
-										
-							}
-							break;
-
-						}
-						else
-						{
-							currentNode = createRootNode(action, currentNode);
-						}
-					}
-					else
-					{
-						this.getGameClient().sendMoveMessage(msgDetails);
-					}
+		switch (messageType) {
+			case GameMessage.GAME_STATE_BOARD:
+				if (gamegui != null) {
+					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
+					this.gamegui.setGameState(board);
 				}
+				break;
 
-				Timer timerx = new Timer();
-				MyTimerTask timerTaskx = new MyTimerTask();
-				timerx.schedule(timerTaskx, 0, 1000);
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					timerx.cancel();
+			case GameMessage.GAME_ACTION_START:
+				@SuppressWarnings("unused")
+				String playingWhiteQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_WHITE);
+				@SuppressWarnings("unused")
+				String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
+				assert (!playingWhiteQueens.equals(playingBlackQueens));
+				setMyQueen(playingWhiteQueens);
+				currentNode = new Node(this.board, myQueen, null, null, null, 0, 1);
 
-					currentNode = currentNode.children.poll();
-					ArrayList<Integer> queenCurrente= new ArrayList<Integer>();
-					ArrayList<Integer> queenNewe = new ArrayList<Integer>();
-					ArrayList<Integer> arrowPose = new ArrayList<Integer>();
+				if (myQueen == 1) {
+					performRolloutsOnCurrentNodeFor30Seconds();
+					makeADecision();
+					updateGameBoardWithDecision();
+				}
+				break;
 
-					for (int i = 0; i < this.board.length; i++) {
-						queenCurrente.add(currentNode.getQueenCurrent()[i]);
-						queenNewe.add(currentNode.getQueenNew()[i]);
-						arrowPose.add(currentNode.getArrowPosition()[i]);
-					}
-					
-					
-					this.gamegui.updateGameState(queenCurrente, queenNewe, arrowPose);
-
-				
-
-				
-				// CHECK IF THE ACTION IS LEGAL
-				// IF SO, UPDATE THE GUI AND OUT LOCAL BOARD AND LET AI WORK
-				// this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
-				// OTHERWISE REPORT ILLEGAL MOVE
-				
-    		break;
-    	// default:
-			// 	assert(false);
-    	// 	break;  	
-    	}
-    	return true;
+			case GameMessage.GAME_ACTION_MOVE:
+				getOpponentMove(msgDetails);
+				findAllPossibleActionsFromPreviousBoard();
+				if (opponentActionValid())
+					updateOurCurrentNodeToMatchOpponentAction();
+				else
+					this.getGameClient().sendMoveMessage(msgDetails);
+				performRolloutsOnCurrentNodeFor30Seconds();
+				makeADecision();
+				updateGameBoardWithDecision();
+				break;
+		}
+		return true;
 	}
 
 	private void setMyQueen(String playingWhiteQueens) {
-		if(this.userName.equals(playingWhiteQueens)){
+		if (this.userName.equals(playingWhiteQueens)) {
 			this.myQueen = 1;
 		} else {
 			this.myQueen = 2;
@@ -248,92 +145,187 @@ public class COSC322Test extends GamePlayer
 		return;
 	}
 
-	private void initGameBoard(ArrayList<Integer> board){
-		for(int i = 0; i < 10; i++){
-			for(int j = 0; j < 10; j++){
-				this.board[i][j] = board.get(11 * (i+1) + (j+1));
+	private void initGameBoard(ArrayList<Integer> board) {
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				this.board[i][j] = board.get(11 * (i + 1) + (j + 1));
 			}
 		}
 		return;
 	}
 
-	private void displayGameBoard(){
-		for(int i = 0; i < 10; i++){
-			for(int j = 0; j < 10; j++){
+	private void displayGameBoard() {
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
 				System.out.print(this.board[i][j]);
 			}
 			System.out.println();
 		}
-		return;
+
 	}
 
 	@Override
-	public void onLogin()
-	{
+	public void onLogin() {
 		System.out.println("Congratualations!!! "
-    			+ "I am called because the server indicated that the login is successfully");
-    	System.out.println("The next step is to find a room and join it: "
-    			+ "the gameClient instance created in my constructor knows how!"); 
-    	this.userName = gameClient.getUserName();
-    	List<Room> rooms = this.gameClient.getRoomList();
-    	for(Room room: rooms) 
-    	{
-    		System.out.println(room);
-    	}
-    	this.gameClient.joinRoom(rooms.get(0).getName());
-    	if(gamegui != null) 
-    	{
-    		gamegui.setRoomInformation(gameClient.getRoomList());
-    	}
+				+ "I am called because the server indicated that the login is successfully");
+		System.out.println("The next step is to find a room and join it: "
+				+ "the gameClient instance created in my constructor knows how!");
+		this.userName = gameClient.getUserName();
+		List<Room> rooms = this.gameClient.getRoomList();
+		for (Room room : rooms) {
+			System.out.println(room);
+		}
+		try (Scanner scanner = new Scanner(System.in)) {
+			System.out.print("Enter a room number");
+			int roomIdx = scanner.nextInt();
+			this.gameClient.joinRoom(rooms.get(roomIdx).getName());
+		}
+
+		if (gamegui != null) {
+			gamegui.setRoomInformation(gameClient.getRoomList());
+		}
 	}
 
 	@Override
-	public String userName()
-	{
+	public String userName() {
 		return userName;
 	}
 
-	public Node createRootNode(Action action, Node node)
-    {
-		int[][] state = node.getState();
-        int childPlayer;
-        if(node.getPlayerType() == 1)
-            childPlayer = 2;
-        else childPlayer = 1;
+	static class RunRollouts extends TimerTask {
+		@Override
+		public void run() {
+			while (true) {
+				currentNode.doRollout();
+			}
+		}
+	}
 
-        int[][] childState = new int[10][10];
-        for (int row = 0; row < 10; row++)
-            for (int col = 0; col<10; col++)
-                childState[row][col] = state[row][col];
+	public void performRolloutsOnCurrentNodeFor30Seconds() {
+		Timer timer = new Timer();
+		RunRollouts timedTask = new RunRollouts();
+		timer.schedule(timedTask, 0, 1000);
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		timer.cancel();
+	}
 
+	public void makeADecision() {
+		currentNode = currentNode.children.poll();
+	}
 
-        childState[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
-        childState[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = node.getPlayerType();
-        childState[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = 7;
-       return new Node(childState, childPlayer, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId(), 1);
-    }
+	public void updateGameBoardWithDecision() {
+		ArrayList<Integer> queenCurrent = new ArrayList<Integer>();
+		ArrayList<Integer> queenNew = new ArrayList<Integer>();
+		ArrayList<Integer> arrowPos = new ArrayList<Integer>();
 
-	public Node createChildNode(Action action, Node node)
-    {
-		int[][] state = node.getState();
-        int childPlayer;
-        if(node.getPlayerType() == 1)
-            childPlayer = 2;
-        else childPlayer = 1;
+		for (int i = 0; i < this.board.length; i++) {
+			queenCurrent.add(currentNode.getQueenCurrent()[i]);
+			queenNew.add(currentNode.getQueenNew()[i]);
+			arrowPos.add(currentNode.getArrowPosition()[i]);
+		}
 
-        int[][] childState = new int[10][10];
-        for (int row = 0; row < 10; row++)
-            for (int col = 0; col<10; col++)
-                childState[row][col] = state[row][col];
+		this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
+	}
 
+	public void getOpponentMove(Map<String, Object> msgDetails) {
+		this.opponentOriginalQueenPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_CURR);
+		this.opponentNewQueenPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_NEXT);
+		this.opponentArrowPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.ARROW_POS);
+	}
 
-        childState[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
-        childState[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = node.getPlayerType();
-        childState[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = 7;
-       return new Node(childState, childPlayer, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
-    }
-	
-	
-	
-	
+	public void findAllPossibleActionsFromPreviousBoard() {
+		ActionFactory nodeActionFactory = new ActionFactory(currentNode.getState(), currentNode.getPlayerType());
+		allPossibleActionsFromCurrentNode = nodeActionFactory.getActions();
+
+	}
+
+	public boolean opponentActionValid() {
+		for (Action action : allPossibleActionsFromCurrentNode) {
+			if ((action.getQueenPositionCurrent()[0] == opponentOriginalQueenPosition.get(0)
+					&& action.getQueenPositionCurrent()[1] == opponentOriginalQueenPosition.get(1)
+					&& action.getQueenPositionNew()[0] == opponentNewQueenPosition.get(0)
+					&& action.getQueenPositionNew()[1] == opponentNewQueenPosition.get(1)
+					&& action.getArrowPosition()[0] == opponentArrowPosition.get(0)
+					&& action.getArrowPosition()[1] == opponentArrowPosition.get(1))) {
+				opponentAction = action;
+				return true;
+			}
+
+		}
+
+		return false;
+	}
+
+	public void updateOurCurrentNodeToMatchOpponentAction() {
+		if (opponentAction != null) {
+
+			if (currentNode.currentChildren.containsKey(opponentAction.getId())) {
+				Node child = currentNode.currentChildren.get(opponentAction.getId());
+				ActionFactory actionFactoryOfChild = new ActionFactory(child.getState(), child.getPlayerType());
+				ArrayList<Action> childActions = actionFactoryOfChild.getActions();
+				generatePriorityQueueForNode(childActions, child);
+
+			} else {
+				currentNode = createNewNodeFromStateUsingAction(currentNode.getState(), getPlayerTypeOfChildren(currentNode.getPlayerType()), opponentAction);
+			}
+		}
+	}
+
+	public Node createNewNodeFromStateUsingAction(int[][] state, int playerTypeOfAction, Action action) {
+
+		int[][] newState = cloneState(state);
+
+		newState = getNewStateUsingAction(newState, playerTypeOfAction, action);
+		return new Node(newState, playerTypeOfAction, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId(), 1);
+	}
+
+	public void createChildNode(Node parentNode, Action action) {
+		int[][] childState = cloneState(parentNode.getState());
+		int childPlayerType = getPlayerTypeOfChildren(parentNode.getPlayerType());
+
+		getNewStateUsingAction(childState, parentNode.getPlayerType(), action);
+
+		parentNode.children.add(new Node(childState, childPlayerType, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId()));
+
+	}
+
+	public int[][] cloneState(int[][] state)
+	{
+		int[][] childState = new int[10][10];
+		for (int row = 0; row < 10; row++)
+			for (int col = 0; col < 10; col++)
+				childState[row][col] = state[row][col];
+		return childState;
+	}
+
+	public int[][] getNewStateUsingAction(int[][] state, int playerType, Action action)
+	  {                        
+		  state[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
+		  state[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = playerType;
+		  state[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = ARROW;
+  
+		  return state;
+	  }
+
+	public void generatePriorityQueueForNode(ArrayList<Action> actions, Node node) {
+		for (Action action : actions) {
+			Node child = currentNode.currentChildren.get(action.getId());
+			if (child != null)
+				node.children.add(child);
+			else {
+				createChildNode(node, action);
+			}
+		}
+	}
+
+	public int getPlayerTypeOfChildren(int playerType) {
+		if (playerType == 1)
+			return 2;
+		else
+			return 1;
+
+	}
 }

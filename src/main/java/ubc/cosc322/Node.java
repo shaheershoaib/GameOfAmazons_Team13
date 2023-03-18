@@ -90,8 +90,10 @@ public class Node
 
             Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
 
-            doRollout(nodeWithHighestUCB1Score, rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
+            doRollout(nodeWithHighestUCB1Score, this.rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
+            nodeWithHighestUCB1Score.updateUCB1(1);
             children.add(nodeWithHighestUCB1Score);
+
 
 
         }                                     // in order to update totalWins of descendant nodes
@@ -157,7 +159,9 @@ public class Node
                 node.totalWins++;  // increment its wins by 1 (Ex: if white won and the current node is white, then increment its wins by 1)
             }
 
+           // System.out.println("Before: "+node.ucb1Score);
             node.updateUCB1(numRolloutsOnParent); // Ensure that the current node has its UCB1 score updated
+            //System.out.println("After: "+node.ucb1Score);
 
             return winner; // Continue to return the winner through the recursive call stack
 
