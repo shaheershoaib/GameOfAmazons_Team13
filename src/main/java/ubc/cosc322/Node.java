@@ -56,7 +56,6 @@ public class Node
         this.id = id;
         currentChildren = new HashMap<>();
 
-
     }
 
     public double getAverageWins(){

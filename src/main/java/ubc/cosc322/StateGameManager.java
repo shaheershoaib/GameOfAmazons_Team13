@@ -1,7 +1,13 @@
 package ubc.cosc322;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import sfs2x.client.entities.Room;
 import ygraph.ai.smartfox.games.BaseGameGUI;
 import ygraph.ai.smartfox.games.GameClient;
@@ -23,6 +29,16 @@ public class StateGameManager extends GamePlayer
 		private int myQueen = -1;
 
 		private int[][] board = null;
+		static Node currentNode = null;
+
+		static class MyTimerTask extends TimerTask {
+			@Override
+			public void run() {
+				while(true){
+					currentNode.doRollout();
+				}
+			}
+		}
     
 	public static void main(String[] args)
 	{
@@ -97,6 +113,46 @@ public class StateGameManager extends GamePlayer
 				@SuppressWarnings("unused") String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
 				assert(!playingWhiteQueens.equals(playingBlackQueens));
 				setMyQueen(playingWhiteQueens);
+				currentNode = new Node (this.board, myQueen, null, null, null, 0, 1);
+				
+					Timer timer = new Timer();
+					MyTimerTask timerTask = new MyTimerTask();
+					if(myQueen == 1)
+					{
+					
+			
+					// Schedule the timer task to run every 1000 milliseconds (1 second)
+					timer.schedule(timerTask, 0, 25000);
+					try {
+						Thread.sleep(25000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					timer.cancel();
+
+					currentNode = currentNode.children.poll();
+					ArrayList<Integer> queenCurrent= new ArrayList<Integer>();
+					ArrayList<Integer> queenNew = new ArrayList<Integer>();
+					ArrayList<Integer> arrowPos = new ArrayList<Integer>();
+
+					for (int i = 0; i < this.board.length; i++) {
+						queenCurrent.add(currentNode.getQueenCurrent()[i]);
+						queenNew.add(currentNode.getQueenNew()[i]);
+						arrowPos.add(currentNode.getArrowPosition()[i]);
+					}
+					
+					
+					this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
+					
+					// Schedule the timer task to run every 1000 milliseconds (1 second)
+					
+
+					}
+					
+
+
+					
 				break;
     	case GameMessage.GAME_ACTION_MOVE:
 				// GET OPPONENTS ACTION
@@ -104,6 +160,9 @@ public class StateGameManager extends GamePlayer
 				ArrayList<Integer> queenCurrent = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_CURR);
 				ArrayList<Integer> queenNew = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_NEXT);
 				ArrayList<Integer> arrowPos = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.ARROW_POS);
+
+
+				
 
 				
 				// CHECK IF THE ACTION IS LEGAL
@@ -171,5 +230,7 @@ public class StateGameManager extends GamePlayer
 	{
 		return userName;
 	}
+	
+	
 	
 }

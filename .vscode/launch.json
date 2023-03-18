@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "ubc.cosc322.COSC322Test",
             "projectName": "team-00",
-            "args": "${userName:PhamByteX, passwd:PhamByteX@8503}"
+            "args": "${userName:shaheershoaib, passwd:shaheershoaib@8502}"
         }
     ]
 }
