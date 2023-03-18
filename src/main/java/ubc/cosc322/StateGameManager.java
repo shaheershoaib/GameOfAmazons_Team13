@@ -16,6 +16,13 @@ public class StateGameManager extends GamePlayer
 	
     private String userName = null;
     private String passwd = null;
+
+		private int blackQueen = 2;
+		private int whiteQueen = 1;
+		private int arrow = 8;
+		private int myQueen = -1;
+
+		private int[][] board = null;
     
 	public static void main(String[] args)
 	{
@@ -43,6 +50,7 @@ public class StateGameManager extends GamePlayer
     {
     	this.userName = userName;
     	this.passwd = passwd;
+			this.board = new int[10][10];
     	
     	//To make a GUI-based player, create an instance of BaseGameGUI
     	//and implement the method getGameGUI() accordingly
@@ -79,15 +87,63 @@ public class StateGameManager extends GamePlayer
     	switch(messageType) 
     	{
     	case GameMessage.GAME_STATE_BOARD:
-    		this.gamegui.setGameState((ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE));
+				@SuppressWarnings("unused") ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
+				initGameBoard(board);
+				displayGameBoard();
+				this.gamegui.setGameState(board);
     		break;
+			case GameMessage.GAME_ACTION_START:
+				@SuppressWarnings("unused") String playingWhiteQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_WHITE);
+				@SuppressWarnings("unused") String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
+				assert(!playingWhiteQueens.equals(playingBlackQueens));
+				setMyQueen(playingWhiteQueens);
+				break;
     	case GameMessage.GAME_ACTION_MOVE:
-    		this.gamegui.updateGameState(msgDetails);
+				// GET OPPONENTS ACTION
+				// oppositionMoveHandler(msgDetails);
+				ArrayList<Integer> queenCurrent = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_CURR);
+				ArrayList<Integer> queenNew = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_NEXT);
+				ArrayList<Integer> arrowPos = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.ARROW_POS);
+
+				
+				// CHECK IF THE ACTION IS LEGAL
+				// IF SO, UPDATE THE GUI AND OUT LOCAL BOARD AND LET AI WORK
+				this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
+				// OTHERWISE REPORT ILLEGAL MOVE
+				this.getGameClient().sendMoveMessage(msgDetails);
     		break;
-    	default:
-    		break;  	
+    	// default:
+			// 	assert(false);
+    	// 	break;  	
     	}
     	return true;
+	}
+
+	private void setMyQueen(String playingWhiteQueens) {
+		if(this.userName.equals(playingWhiteQueens)){
+			this.myQueen = 1;
+		} else {
+			this.myQueen = 2;
+		}
+		return;
+	}
+
+	private void initGameBoard(ArrayList<Integer> board){
+		for(int i = 0; i < 10; i++){
+			for(int j = 0; j < 10; j++){
+				this.board[i][j] = board.get(11 * (i+1) + (j+1));
+			}
+		}
+		return;
+	}
+
+	private void displayGameBoard(){
+		for(int i = 0; i < 10; i++){
+			for(int j = 0; j < 10; j++){
+				System.out.print(this.board[i][j]);
+			}
+		}
+		return;
 	}
 
 	@Override
