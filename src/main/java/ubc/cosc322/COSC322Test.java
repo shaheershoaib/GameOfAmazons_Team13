@@ -101,6 +101,7 @@ public class COSC322Test extends GamePlayer {
 			case GameMessage.GAME_STATE_BOARD:
 				if (gamegui != null) {
 					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
+					initGameBoard(board);
 					this.gamegui.setGameState(board);
 				}
 				break;
@@ -142,7 +143,6 @@ public class COSC322Test extends GamePlayer {
 		} else {
 			this.myQueen = 2;
 		}
-		return;
 	}
 
 	private void initGameBoard(ArrayList<Integer> board) {
@@ -151,7 +151,6 @@ public class COSC322Test extends GamePlayer {
 				this.board[i][j] = board.get(11 * (i + 1) + (j + 1));
 			}
 		}
-		return;
 	}
 
 	private void displayGameBoard() {

@@ -88,10 +88,10 @@ public class Node
         if(this.terminal==0) //Rollout on current node it isn't terminal
         {
 
+
             Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
 
             doRollout(nodeWithHighestUCB1Score, this.rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
-            nodeWithHighestUCB1Score.updateUCB1(1);
             children.add(nodeWithHighestUCB1Score);
 
 
@@ -182,9 +182,10 @@ public class Node
     }
 
 
+
     public double getUcb1Score()
     {
-        return ucb1Score;
+        return this.ucb1Score;
     }
 
     public int[] getQueenCurrent()

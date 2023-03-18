@@ -46,7 +46,7 @@ for(int i=0; i<size; i++)
 {
     Node banana = node.children.poll();
     System.out.println("Node ID: "+banana.getId());
-    System.out.println("\tNode UCB1: "+node.getUcb1Score());
+    System.out.println("\tNode UCB1: "+banana.getUcb1Score());
 
     for (int j = 0; j < 3000; j++) {
         if(banana.currentChildren.containsKey(j)) {
