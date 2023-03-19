@@ -11,7 +11,7 @@ public class Node
 
     public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score).reversed());
 
-    ArrayList<Action> actionArrayList;
+  //  ArrayList<Action> actionArrayList;
    HashMap<Integer, Node> currentChildren;
     private double ucb1Score;
     private int terminal; // Save the if the node is a terminal node or not if we're visiting this node again
@@ -20,6 +20,7 @@ public class Node
     private final int[] arrowPosition;
     private int id;
 
+   MCTS_Thread[] threads;
     public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition, int id, int op)
     {
         this.state = state;
@@ -36,8 +37,7 @@ public class Node
         ActionFactory actions = new ActionFactory(this.state, this.playerType);
         ArrayList<Action> actionArrayList = new ArrayList<>();
         actionArrayList = actions.getActions();
-
-
+        threads = new MCTS_Thread[4];
 
         for(Action action: actionArrayList)
             children.add(createNode(action, this));
@@ -67,7 +67,7 @@ public class Node
         return state;
     }
 
-    public void doRollout()
+    public void doRollout() throws InterruptedException
     {
     //printArray(state);
         if(this.terminal == -1)
@@ -88,11 +88,32 @@ public class Node
         if(this.terminal==0) //Rollout on current node it isn't terminal
         {
 
+            for(int i=0; i< threads.length; i++)
+            {
+                if(children!=null)
+                {
+                    threads[i] = new MCTS_Thread(children.poll(), this.rollouts);
+                    threads[i].start();
+                }
 
-            Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
+            }
 
-            doRollout(nodeWithHighestUCB1Score, this.rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
-            children.add(nodeWithHighestUCB1Score);
+            for(int i=0; i<threads.length; i++)
+            {
+                if(threads[i].getNode()!=null)
+                {
+                    threads[i].join();
+                    children.add(threads[i].getNode());
+
+                }
+
+            }
+
+
+            //Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
+
+           // doRollout(nodeWithHighestUCB1Score, this.rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
+            //children.add(nodeWithHighestUCB1Score);
 
 
 
@@ -100,14 +121,14 @@ public class Node
 
     }
 
-    private int doRollout(Node node, int numRolloutsOnParent)
+    int doRollout(Node node, int numRolloutsOnParent)
     {
 
-        if(node.actionArrayList == null)
-        {
-            ActionFactory actions = new ActionFactory(node.state, node.playerType);
-            node.actionArrayList = actions.getActions();
-        }
+
+
+            ActionFactory actionFactory = new ActionFactory(node.state, node.playerType);
+            ArrayList<Action> actions = actionFactory.getActions();
+
 
 
         //printArray(node.state);
@@ -115,7 +136,7 @@ public class Node
                             // Saving the result in a terminal variable will save time when checking if a node is a terminal node IF the node has already been visited
         {
 
-            if(node.actionArrayList.size() == 0)
+            if(actions.size() == 0)
             {
                 if (node.playerType == 1)
                     node.terminal = 2;
@@ -135,12 +156,12 @@ public class Node
         {
             node.rollouts++; // Increment the number of rollouts on the current node
 
-            int size = node.actionArrayList.size();
+            int size = actions.size();
 
             Random rand = new Random();
             int randomIndex = rand.nextInt(size);
 
-            Action randomAction = node.actionArrayList.get(randomIndex);
+            Action randomAction = actions.get(randomIndex);
             Node newNode;
 
             if(node.currentChildren.containsKey(randomAction.getId()))
@@ -250,7 +271,7 @@ public class Node
         childState[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
         childState[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = node.playerType;
         childState[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = 7;
-       return new Node(childState, childPlayer, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
+        return new Node(childState, childPlayer, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
     }
 
     public int getId()
@@ -263,5 +284,8 @@ public class Node
         return playerType;
     }
 
-    
+    public int getRollouts()
+    {
+        return rollouts;
+    }
 }

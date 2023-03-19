@@ -1,15 +1,6 @@
 package ubc.cosc322;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import sfs2x.client.entities.Room;
 import ygraph.ai.smartfox.games.BaseGameGUI;
@@ -26,8 +17,8 @@ public class COSC322Test extends GamePlayer {
 	private String userName = null;
 	private String passwd = null;
 
-	private final int blackQueen = 2;
-	private final int whiteQueen = 1;
+	private final int whiteQueen = 2;
+	private final int blackQueen = 1;
 	private final int ARROW = 7;
 	private int myQueen = -1;
 
@@ -41,7 +32,19 @@ public class COSC322Test extends GamePlayer {
 
 
 	public static void main(String[] args) {
-		COSC322Test player = new COSC322Test(args[0], args[1]);
+		COSC322Test player;
+		String userName, passwd;
+		if(args.length == 0)
+		{
+
+			Random random = new Random();
+			userName = "MCTS_Team_13#" + random.nextInt(1000);
+			passwd = "password";
+			player = new COSC322Test(userName, passwd);
+
+
+		}
+		else player = new COSC322Test(args[0], args[1]);
 
 		if (player.getGameGUI() == null) {
 			player.Go();
@@ -55,12 +58,7 @@ public class COSC322Test extends GamePlayer {
 		}
 	}
 
-	/**
-	 * Any name and passwd
-	 * 
-	 * @param userName
-	 * @param passwd
-	 */
+
 	public COSC322Test(String userName, String passwd) {
 		this.userName = userName;
 		this.passwd = passwd;
@@ -101,7 +99,7 @@ public class COSC322Test extends GamePlayer {
 			case GameMessage.GAME_STATE_BOARD:
 				if (gamegui != null) {
 					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
-					initGameBoard(board);
+					this.board = initGameBoard();
 					this.gamegui.setGameState(board);
 				}
 				break;
@@ -145,12 +143,21 @@ public class COSC322Test extends GamePlayer {
 		}
 	}
 
-	private void initGameBoard(ArrayList<Integer> board) {
-		for (int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				this.board[i][j] = board.get(11 * (i + 1) + (j + 1));
-			}
-		}
+	private int[][] initGameBoard() {
+		int[][] state= new int[][]{
+				{0, 0, 0, 2, 0, 0, 2, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{2, 0, 0, 0, 0, 0, 0, 0, 0, 2},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
+		};
+
+		return state;
 	}
 
 	private void displayGameBoard() {
@@ -194,7 +201,14 @@ public class COSC322Test extends GamePlayer {
 		@Override
 		public void run() {
 			while (true) {
-				currentNode.doRollout();
+				try
+				{
+					currentNode.doRollout();
+				}
+				catch (InterruptedException e)
+				{
+					throw new RuntimeException(e);
+				}
 			}
 		}
 	}
@@ -220,7 +234,7 @@ public class COSC322Test extends GamePlayer {
 		ArrayList<Integer> queenNew = new ArrayList<Integer>();
 		ArrayList<Integer> arrowPos = new ArrayList<Integer>();
 
-		for (int i = 0; i < this.board.length; i++) {
+		for (int i = 0; i < 2; i++) {
 			queenCurrent.add(currentNode.getQueenCurrent()[i]);
 			queenNew.add(currentNode.getQueenNew()[i]);
 			arrowPos.add(currentNode.getArrowPosition()[i]);
