@@ -1,4 +1,7 @@
-package ubc.cosc322;
+package ubc.cosc322.mcts;
+import ubc.cosc322.actionutil.Action;
+import ubc.cosc322.actionutil.ActionFactory;
+
 
 import java.util.*;
 
@@ -9,10 +12,10 @@ public class Node
    private int totalWins;
    private final int playerType; // 1 == White, 2 == Black
 
-    public PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score).reversed());
+    private final PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score).reversed());
 
   //  ArrayList<Action> actionArrayList;
-   HashMap<Integer, Node> currentChildren;
+   private final HashMap<Integer, Node> currentChildren;
     private double ucb1Score;
     private int terminal; // Save the if the node is a terminal node or not if we're visiting this node again
     private final int[] queenCurrent;
@@ -37,7 +40,7 @@ public class Node
         ActionFactory actions = new ActionFactory(this.state, this.playerType);
         ArrayList<Action> actionArrayList = new ArrayList<>();
         actionArrayList = actions.getActions();
-        threads = new MCTS_Thread[4];
+        threads = new MCTS_Thread[6];
 
         for(Action action: actionArrayList)
             children.add(createNode(action, this));
@@ -287,5 +290,13 @@ public class Node
     public int getRollouts()
     {
         return rollouts;
+    }
+
+    public PriorityQueue<Node> getChildren() {
+        return children;
+    }
+
+    public HashMap<Integer, Node> getCurrentChildren() {
+        return currentChildren;
     }
 }

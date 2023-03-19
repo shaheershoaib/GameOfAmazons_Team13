@@ -1,6 +1,10 @@
-package ubc.cosc322;
+package ubc.cosc322.run;
 
 import java.util.*;
+
+import ubc.cosc322.actionutil.ActionFactory;
+import ubc.cosc322.actionutil.Action;
+import ubc.cosc322.mcts.Node;
 
 import sfs2x.client.entities.Room;
 import ygraph.ai.smartfox.games.BaseGameGUI;
@@ -9,7 +13,7 @@ import ygraph.ai.smartfox.games.GameMessage;
 import ygraph.ai.smartfox.games.GamePlayer;
 import ygraph.ai.smartfox.games.amazons.AmazonsGameMessage;
 
-public class COSC322Test extends GamePlayer {
+public class COSC322GamePlayer extends GamePlayer {
 
 	private GameClient gameClient = null;
 	private BaseGameGUI gamegui = null;
@@ -32,7 +36,7 @@ public class COSC322Test extends GamePlayer {
 
 
 	public static void main(String[] args) {
-		COSC322Test player;
+		COSC322GamePlayer player;
 		String userName, passwd;
 		if(args.length == 0)
 		{
@@ -40,11 +44,11 @@ public class COSC322Test extends GamePlayer {
 			Random random = new Random();
 			userName = "MCTS_Team_13#" + random.nextInt(1000);
 			passwd = "password";
-			player = new COSC322Test(userName, passwd);
+			player = new COSC322GamePlayer(userName, passwd);
 
 
 		}
-		else player = new COSC322Test(args[0], args[1]);
+		else player = new COSC322GamePlayer(args[0], args[1]);
 
 		if (player.getGameGUI() == null) {
 			player.Go();
@@ -59,7 +63,7 @@ public class COSC322Test extends GamePlayer {
 	}
 
 
-	public COSC322Test(String userName, String passwd) {
+	public COSC322GamePlayer(String userName, String passwd) {
 		this.userName = userName;
 		this.passwd = passwd;
 		this.board = new int[10][10];
@@ -121,6 +125,9 @@ public class COSC322Test extends GamePlayer {
 				break;
 
 			case GameMessage.GAME_ACTION_MOVE:
+				if (gamegui != null) {
+					gamegui.setGameState((ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE));
+				}
 				getOpponentMove(msgDetails);
 				findAllPossibleActionsFromPreviousBoard();
 				if (opponentActionValid())
@@ -226,7 +233,7 @@ public class COSC322Test extends GamePlayer {
 	}
 
 	public void makeADecision() {
-		currentNode = currentNode.children.poll();
+		currentNode = currentNode.getChildren().poll();
 	}
 
 	public void updateGameBoardWithDecision() {
@@ -275,8 +282,8 @@ public class COSC322Test extends GamePlayer {
 	public void updateOurCurrentNodeToMatchOpponentAction() {
 		if (opponentAction != null) {
 
-			if (currentNode.currentChildren.containsKey(opponentAction.getId())) {
-				Node child = currentNode.currentChildren.get(opponentAction.getId());
+			if (currentNode.getCurrentChildren().containsKey(opponentAction.getId())) {
+				Node child = currentNode.getCurrentChildren().get(opponentAction.getId());
 				ActionFactory actionFactoryOfChild = new ActionFactory(child.getState(), child.getPlayerType());
 				ArrayList<Action> childActions = actionFactoryOfChild.getActions();
 				generatePriorityQueueForNode(childActions, child);
@@ -301,7 +308,7 @@ public class COSC322Test extends GamePlayer {
 
 		getNewStateUsingAction(childState, parentNode.getPlayerType(), action);
 
-		parentNode.children.add(new Node(childState, childPlayerType, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId()));
+		parentNode.getChildren().add(new Node(childState, childPlayerType, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId()));
 
 	}
 
@@ -325,9 +332,9 @@ public class COSC322Test extends GamePlayer {
 
 	public void generatePriorityQueueForNode(ArrayList<Action> actions, Node node) {
 		for (Action action : actions) {
-			Node child = currentNode.currentChildren.get(action.getId());
+			Node child = currentNode.getCurrentChildren().get(action.getId());
 			if (child != null)
-				node.children.add(child);
+				node.getChildren().add(child);
 			else {
 				createChildNode(node, action);
 			}

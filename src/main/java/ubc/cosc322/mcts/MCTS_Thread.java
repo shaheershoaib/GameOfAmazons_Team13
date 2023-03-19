@@ -1,12 +1,12 @@
-package ubc.cosc322;
+package ubc.cosc322.mcts;
 
 public class MCTS_Thread extends Thread
 {
 
-    private Node node;
-   private int numRolloutsOnParent;
+    private final Node node;
+   private final int numRolloutsOnParent;
 
-    public MCTS_Thread(Node node, int numRolloutsOnParent)
+    protected MCTS_Thread(Node node, int numRolloutsOnParent)
     {
     this.node = node;
     this.numRolloutsOnParent = numRolloutsOnParent;
@@ -14,7 +14,7 @@ public class MCTS_Thread extends Thread
 
 
 
-    public Node getNode()
+    protected Node getNode()
     {
         return node;
     }

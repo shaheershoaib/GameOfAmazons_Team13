@@ -1,4 +1,4 @@
-package ubc.cosc322;
+package ubc.cosc322.actionutil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,7 +13,7 @@ public class ActionFactory {
 
     int player;
     int id;
-    ActionFactory(int[][] state,int player){
+    public ActionFactory(int[][] state, int player){
         this.state=state;
         this.player=player;
         this.id=0;

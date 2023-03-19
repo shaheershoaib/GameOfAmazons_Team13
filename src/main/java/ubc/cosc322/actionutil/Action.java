@@ -1,4 +1,4 @@
-package ubc.cosc322;
+package ubc.cosc322.actionutil;
 
 import java.util.ArrayList;
 
