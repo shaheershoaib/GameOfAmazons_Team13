@@ -4,6 +4,7 @@ import java.util.*;
 
 import ubc.cosc322.actionutil.ActionFactory;
 import ubc.cosc322.actionutil.Action;
+import ubc.cosc322.mcts.MCTS_Manager;
 import ubc.cosc322.mcts.Node;
 
 import sfs2x.client.entities.Room;
@@ -21,9 +22,6 @@ public class COSC322GamePlayer extends GamePlayer {
 	private String userName = null;
 	private String passwd = null;
 
-	private final int whiteQueen = 2;
-	private final int blackQueen = 1;
-	private final int ARROW = 7;
 	private int myQueen = -1;
 
 	private int[][] board = null;
@@ -105,6 +103,7 @@ public class COSC322GamePlayer extends GamePlayer {
 					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
 					this.board = initGameBoard();
 					this.gamegui.setGameState(board);
+
 				}
 				break;
 
@@ -115,10 +114,17 @@ public class COSC322GamePlayer extends GamePlayer {
 				String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
 				assert (!playingWhiteQueens.equals(playingBlackQueens));
 				setMyQueen(playingWhiteQueens);
-				currentNode = new Node(this.board, myQueen, null, null, null, 0, 1);
+				MCTS_Manager.setCurrentNode(new Node(this.board, myQueen, null, null, null, 0));
 
 				if (myQueen == 1) {
-					performRolloutsOnCurrentNodeFor30Seconds();
+					try
+					{
+						performRolloutsOnCurrentNodeFor30Seconds();
+					}
+					catch (InterruptedException e)
+					{
+						throw new RuntimeException(e);
+					}
 					makeADecision();
 					updateGameBoardWithDecision();
 				}
@@ -128,22 +134,34 @@ public class COSC322GamePlayer extends GamePlayer {
 				if (gamegui != null) {
 					gamegui.setGameState((ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE));
 				}
-				getOpponentMove(msgDetails);
-				findAllPossibleActionsFromPreviousBoard();
-				if (opponentActionValid())
-					updateOurCurrentNodeToMatchOpponentAction();
-				else
+				if(!isOpponentMoveValid(msgDetails))
 					this.getGameClient().sendMoveMessage(msgDetails);
-				performRolloutsOnCurrentNodeFor30Seconds();
-				makeADecision();
-				updateGameBoardWithDecision();
+				if(MCTS_Manager.getNode().getTerminal() != 0) {
+					System.out.println("We have lost!");
+					System.out.println("The winner is Queen"+MCTS_Manager.getNode().getTerminal());
+				}
+
+				else
+				{
+					try
+					{
+						performRolloutsOnCurrentNodeFor30Seconds();
+					}
+					catch (InterruptedException e)
+					{
+						throw new RuntimeException(e);
+					}
+					makeADecision();
+					updateGameBoardWithDecision();
+
+				}
 				break;
 		}
 		return true;
 	}
 
-	private void setMyQueen(String playingWhiteQueens) {
-		if (this.userName.equals(playingWhiteQueens)) {
+	private void setMyQueen(String playingBlackQueens) {
+		if (this.userName.equals(playingBlackQueens)) {
 			this.myQueen = 1;
 		} else {
 			this.myQueen = 2;
@@ -151,7 +169,8 @@ public class COSC322GamePlayer extends GamePlayer {
 	}
 
 	private int[][] initGameBoard() {
-		int[][] state= new int[][]{
+
+		return new int[][]{
 				{0, 0, 0, 2, 0, 0, 2, 0, 0, 0},
 				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -163,19 +182,8 @@ public class COSC322GamePlayer extends GamePlayer {
 				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				{0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
 		};
-
-		return state;
 	}
 
-	private void displayGameBoard() {
-		for (int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				System.out.print(this.board[i][j]);
-			}
-			System.out.println();
-		}
-
-	}
 
 	@Override
 	public void onLogin() {
@@ -204,36 +212,19 @@ public class COSC322GamePlayer extends GamePlayer {
 		return userName;
 	}
 
-	static class RunRollouts extends TimerTask {
-		@Override
-		public void run() {
-			while (true) {
-				try
-				{
-					currentNode.doRollout();
-				}
-				catch (InterruptedException e)
-				{
-					throw new RuntimeException(e);
-				}
-			}
-		}
-	}
 
-	public void performRolloutsOnCurrentNodeFor30Seconds() {
-		Timer timer = new Timer();
-		RunRollouts timedTask = new RunRollouts();
-		timer.schedule(timedTask, 0, 1000);
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		timer.cancel();
+
+	public void performRolloutsOnCurrentNodeFor30Seconds() throws InterruptedException {
+		RolloutThread rolloutThread = new RolloutThread();
+		rolloutThread.start();
+		Thread.sleep(5000);
+		rolloutThread.stopThread();
+		System.out.println("AI has finished thinking");
 	}
 
 	public void makeADecision() {
-		currentNode = currentNode.getChildren().poll();
+		MCTS_Manager.makeMove();
+		System.out.println("AI has made a decision");
 	}
 
 	public void updateGameBoardWithDecision() {
@@ -242,110 +233,35 @@ public class COSC322GamePlayer extends GamePlayer {
 		ArrayList<Integer> arrowPos = new ArrayList<Integer>();
 
 		for (int i = 0; i < 2; i++) {
-			queenCurrent.add(currentNode.getQueenCurrent()[i]);
-			queenNew.add(currentNode.getQueenNew()[i]);
-			arrowPos.add(currentNode.getArrowPosition()[i]);
+			queenCurrent.add(MCTS_Manager.getNode().getQueenCurrent()[i] + 1);
+			queenNew.add(MCTS_Manager.getNode().getQueenNew()[i] + 1);
+			arrowPos.add(MCTS_Manager.getNode().getArrowPosition()[i] + 1);
 		}
+
 
 		this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
+		System.out.println("Game board has been updated with AI's decision");
 	}
 
-	public void getOpponentMove(Map<String, Object> msgDetails) {
-		this.opponentOriginalQueenPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_CURR);
-		this.opponentNewQueenPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.QUEEN_POS_NEXT);
-		this.opponentArrowPosition = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.ARROW_POS);
+	public boolean isOpponentMoveValid(Map<String, Object> msgDetails) {
+		return MCTS_Manager.isOpponentMoveValid(msgDetails);
 	}
 
-	public void findAllPossibleActionsFromPreviousBoard() {
-		ActionFactory nodeActionFactory = new ActionFactory(currentNode.getState(), currentNode.getPlayerType());
-		allPossibleActionsFromCurrentNode = nodeActionFactory.getActions();
 
-	}
-
-	public boolean opponentActionValid() {
-		for (Action action : allPossibleActionsFromCurrentNode) {
-			if ((action.getQueenPositionCurrent()[0] == opponentOriginalQueenPosition.get(0)
-					&& action.getQueenPositionCurrent()[1] == opponentOriginalQueenPosition.get(1)
-					&& action.getQueenPositionNew()[0] == opponentNewQueenPosition.get(0)
-					&& action.getQueenPositionNew()[1] == opponentNewQueenPosition.get(1)
-					&& action.getArrowPosition()[0] == opponentArrowPosition.get(0)
-					&& action.getArrowPosition()[1] == opponentArrowPosition.get(1))) {
-				opponentAction = action;
-				return true;
-			}
-
-		}
-
-		return false;
-	}
-
-	public void updateOurCurrentNodeToMatchOpponentAction() {
-		if (opponentAction != null) {
-
-			if (currentNode.getCurrentChildren().containsKey(opponentAction.getId())) {
-				Node child = currentNode.getCurrentChildren().get(opponentAction.getId());
-				ActionFactory actionFactoryOfChild = new ActionFactory(child.getState(), child.getPlayerType());
-				ArrayList<Action> childActions = actionFactoryOfChild.getActions();
-				generatePriorityQueueForNode(childActions, child);
-
-			} else {
-				currentNode = createNewNodeFromStateUsingAction(currentNode.getState(), getPlayerTypeOfChildren(currentNode.getPlayerType()), opponentAction);
+	class RolloutThread extends Thread{
+		boolean running = true;
+		public void run() {
+			try {
+				while(running)
+					MCTS_Manager.doRollout();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		}
-	}
 
-	public Node createNewNodeFromStateUsingAction(int[][] state, int playerTypeOfAction, Action action) {
-
-		int[][] newState = cloneState(state);
-
-		newState = getNewStateUsingAction(newState, playerTypeOfAction, action);
-		return new Node(newState, playerTypeOfAction, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId(), 1);
-	}
-
-	public void createChildNode(Node parentNode, Action action) {
-		int[][] childState = cloneState(parentNode.getState());
-		int childPlayerType = getPlayerTypeOfChildren(parentNode.getPlayerType());
-
-		getNewStateUsingAction(childState, parentNode.getPlayerType(), action);
-
-		parentNode.getChildren().add(new Node(childState, childPlayerType, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId()));
-
-	}
-
-	public int[][] cloneState(int[][] state)
-	{
-		int[][] childState = new int[10][10];
-		for (int row = 0; row < 10; row++)
-			for (int col = 0; col < 10; col++)
-				childState[row][col] = state[row][col];
-		return childState;
-	}
-
-	public int[][] getNewStateUsingAction(int[][] state, int playerType, Action action)
-	  {                        
-		  state[action.getQueenPositionCurrent()[0]][action.getQueenPositionCurrent()[1]] = 0;
-		  state[action.getQueenPositionNew()[0]][action.getQueenPositionNew()[1]] = playerType;
-		  state[action.getArrowPosition()[0]][action.getArrowPosition()[1]] = ARROW;
-  
-		  return state;
-	  }
-
-	public void generatePriorityQueueForNode(ArrayList<Action> actions, Node node) {
-		for (Action action : actions) {
-			Node child = currentNode.getCurrentChildren().get(action.getId());
-			if (child != null)
-				node.getChildren().add(child);
-			else {
-				createChildNode(node, action);
-			}
+		public void stopThread()
+		{
+			running = false;
 		}
-	}
-
-	public int getPlayerTypeOfChildren(int playerType) {
-		if (playerType == 1)
-			return 2;
-		else
-			return 1;
-
 	}
 }

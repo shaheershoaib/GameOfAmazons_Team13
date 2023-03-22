@@ -1,12 +1,12 @@
 package ubc.cosc322.mcts;
 
-public class MCTS_Thread extends Thread
+ class MCTS_Thread extends Thread
 {
 
     private final Node node;
    private final int numRolloutsOnParent;
 
-    protected MCTS_Thread(Node node, int numRolloutsOnParent)
+    public MCTS_Thread(Node node, int numRolloutsOnParent)
     {
     this.node = node;
     this.numRolloutsOnParent = numRolloutsOnParent;
@@ -14,7 +14,7 @@ public class MCTS_Thread extends Thread
 
 
 
-    protected Node getNode()
+    public  Node getNode()
     {
         return node;
     }
@@ -22,6 +22,6 @@ public class MCTS_Thread extends Thread
     @Override
     public void run()
     {
-        node.doRollout(node, numRolloutsOnParent);
+        RolloutManager.rollout(node, numRolloutsOnParent);
     }
 }

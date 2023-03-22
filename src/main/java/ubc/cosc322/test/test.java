@@ -1,9 +1,7 @@
 package ubc.cosc322.test;
+import ubc.cosc322.mcts.MCTS_Manager;
 import ubc.cosc322.mcts.Node;
 
-import java.sql.SQLOutput;
-import java.util.ArrayList;
-import java.util.PriorityQueue;
 
 public class test {
     public static void main(String[] args) throws InterruptedException
@@ -21,21 +19,24 @@ public class test {
                 {0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
         };
 
-        Node node = new Node (state, 1, null, null, null, 0, 1);
+        Node node = new Node (state, 1, null, null, null, 0);
 
 
-        int numRollouts = 0;
+
+
+        MCTS_Manager.setCurrentNode(node);
+        MCTS_Manager.setThreads(4);
 
 
     for (int i = 0; i < 2500; i++)
     {
 
+        MCTS_Manager.doRollout();
 
-        node.doRollout();
-      //  System.out.println(i);
-      //  numRollouts++;
-       // System.out.println(numRollouts);
+
     }
+
+
 
         System.out.println("At the end, Node ID: "+node.getChildren().peek().getId());
         System.out.println("At the end, Node UCB1: "+node.getChildren().peek().getUcb1Score());
