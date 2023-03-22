@@ -30,6 +30,8 @@ public class COSC322GamePlayer extends GamePlayer {
 	private ArrayList<Integer> opponentOriginalQueenPosition, opponentNewQueenPosition, opponentArrowPosition;
 	private ArrayList<Action> allPossibleActionsFromCurrentNode;
 	private Action opponentAction;
+	private int occurentBoard=0;
+	private int occurenceStart=0;
 
 
 
@@ -96,27 +98,35 @@ public class COSC322GamePlayer extends GamePlayer {
 		// For a detailed description of the message types and format,
 		// see the method GamePlayer.handleGameMessage() in the game-client-api
 		// document.
+		//System.out.println("HELLO THIS IS YOUR MOM: "+messageType);
+		System.out.println("Message Type: "+messageType);
 
 		switch (messageType) {
 			case GameMessage.GAME_STATE_BOARD:
+				occurentBoard++;
+				System.out.println("Occurence Board: "+occurentBoard);
 				if (gamegui != null) {
 					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
 					this.board = initGameBoard();
 					this.gamegui.setGameState(board);
 
+
 				}
 				break;
 
 			case GameMessage.GAME_ACTION_START:
+				occurenceStart++;
+				System.out.println("Occurence Start: "+occurenceStart);
+
 				@SuppressWarnings("unused")
 				String playingWhiteQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_WHITE);
 				@SuppressWarnings("unused")
 				String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
-				assert (!playingWhiteQueens.equals(playingBlackQueens));
-				setMyQueen(playingWhiteQueens);
-				MCTS_Manager.setCurrentNode(new Node(this.board, myQueen, null, null, null, 0));
+				setMyQueen(playingBlackQueens);
+				MCTS_Manager.setCurrentNode(new Node(this.board, 2, null, null, null, 0));
 
-				if (myQueen == 1) {
+				if (myQueen == 2) {
+
 					try
 					{
 						performRolloutsOnCurrentNodeFor30Seconds();
@@ -126,16 +136,24 @@ public class COSC322GamePlayer extends GamePlayer {
 						throw new RuntimeException(e);
 					}
 					makeADecision();
+					printArray();
 					updateGameBoardWithDecision();
-				}
+
+					}
 				break;
 
 			case GameMessage.GAME_ACTION_MOVE:
+
 				if (gamegui != null) {
-					gamegui.setGameState((ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE));
+					gamegui.updateGameState(msgDetails);
+					System.out.println("I will now make my move!");
 				}
-				if(!isOpponentMoveValid(msgDetails))
-					this.getGameClient().sendMoveMessage(msgDetails);
+				if(!isOpponentMoveValid(msgDetails)) {
+					//this.getGameClient().sendMoveMessage(msgDetails);
+					System.out.println("invalid");
+				}
+				printArray();
+
 				if(MCTS_Manager.getNode().getTerminal() != 0) {
 					System.out.println("We have lost!");
 					System.out.println("The winner is Queen"+MCTS_Manager.getNode().getTerminal());
@@ -152,9 +170,11 @@ public class COSC322GamePlayer extends GamePlayer {
 						throw new RuntimeException(e);
 					}
 					makeADecision();
+					printArray();
 					updateGameBoardWithDecision();
 
 				}
+
 				break;
 		}
 		return true;
@@ -162,9 +182,9 @@ public class COSC322GamePlayer extends GamePlayer {
 
 	private void setMyQueen(String playingBlackQueens) {
 		if (this.userName.equals(playingBlackQueens)) {
-			this.myQueen = 1;
-		} else {
 			this.myQueen = 2;
+		} else {
+			this.myQueen = 1;
 		}
 	}
 
@@ -232,14 +252,19 @@ public class COSC322GamePlayer extends GamePlayer {
 		ArrayList<Integer> queenNew = new ArrayList<Integer>();
 		ArrayList<Integer> arrowPos = new ArrayList<Integer>();
 
-		for (int i = 0; i < 2; i++) {
-			queenCurrent.add(MCTS_Manager.getNode().getQueenCurrent()[i] + 1);
-			queenNew.add(MCTS_Manager.getNode().getQueenNew()[i] + 1);
-			arrowPos.add(MCTS_Manager.getNode().getArrowPosition()[i] + 1);
-		}
+
+		queenCurrent.add(9 - MCTS_Manager.getNode().getQueenCurrent()[0] + 1);
+		queenCurrent.add(MCTS_Manager.getNode().getQueenCurrent()[1] + 1);
+
+		queenNew.add(9 - MCTS_Manager.getNode().getQueenNew()[0] + 1);
+		queenNew.add(MCTS_Manager.getNode().getQueenNew()[1] + 1);
+
+		arrowPos.add(9 - MCTS_Manager.getNode().getArrowPosition()[0] + 1);
+		arrowPos.add(MCTS_Manager.getNode().getArrowPosition()[1] + 1);
 
 
 		this.gamegui.updateGameState(queenCurrent, queenNew, arrowPos);
+		this.getGameClient().sendMoveMessage(queenCurrent, queenNew, arrowPos);
 		System.out.println("Game board has been updated with AI's decision");
 	}
 
@@ -247,6 +272,16 @@ public class COSC322GamePlayer extends GamePlayer {
 		return MCTS_Manager.isOpponentMoveValid(msgDetails);
 	}
 
+	public void printArray()
+	{
+		int[][] state = MCTS_Manager.getNode().getState();
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				System.out.print(state[i][j]+" ");
+			}
+			System.out.println();
+		}
+	}
 
 	class RolloutThread extends Thread{
 		boolean running = true;

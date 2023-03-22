@@ -45,6 +45,7 @@ public class MCTS_Manager {
    }
    public static boolean isOpponentMoveValid(Map<String, Object> msgDetails)
    {
+       System.out.println("My player type is: "+node.getPlayerType());
        ActionFactory actionFactory = new ActionFactory(node.getState(), node.getPlayerType());
        ArrayList<Action> actions = actionFactory.getActions();
        return OpponentActionValidator.validateOpponentMove(msgDetails, actions);

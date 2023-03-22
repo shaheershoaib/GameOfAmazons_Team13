@@ -1,6 +1,10 @@
 package ubc.cosc322.test;
+import ubc.cosc322.actionutil.ActionFactory;
+import ubc.cosc322.actionutil.Action;
 import ubc.cosc322.mcts.MCTS_Manager;
 import ubc.cosc322.mcts.Node;
+
+import java.util.ArrayList;
 
 
 public class test {
@@ -19,13 +23,20 @@ public class test {
                 {0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
         };
 
-        Node node = new Node (state, 1, null, null, null, 0);
+        Node node = new Node (state, 2, null, null, null, 0);
 
 
 
 
         MCTS_Manager.setCurrentNode(node);
         MCTS_Manager.setThreads(4);
+
+
+          // System.out.println("Not this one");
+
+
+
+
 
 
     for (int i = 0; i < 2500; i++)
@@ -40,6 +51,7 @@ public class test {
 
         System.out.println("At the end, Node ID: "+node.getChildren().peek().getId());
         System.out.println("At the end, Node UCB1: "+node.getChildren().peek().getUcb1Score());
+        System.out.println("Children Size: "+node.getChildren().size());
 
 
 

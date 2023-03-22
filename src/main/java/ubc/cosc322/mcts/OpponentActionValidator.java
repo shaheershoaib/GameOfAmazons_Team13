@@ -39,12 +39,12 @@ final class OpponentActionValidator {
 
     private static boolean opponentActionValid() {
         for (Action action : allPossibleActionsFromCurrentNode) {
-            if ((action.getQueenPositionCurrent()[0] == opponentOriginalQueenPosition.get(0)
-                    && action.getQueenPositionCurrent()[1] == opponentOriginalQueenPosition.get(1)
-                    && action.getQueenPositionNew()[0] == opponentNewQueenPosition.get(0)
-                    && action.getQueenPositionNew()[1] == opponentNewQueenPosition.get(1)
-                    && action.getArrowPosition()[0] == opponentArrowPosition.get(0)
-                    && action.getArrowPosition()[1] == opponentArrowPosition.get(1))) {
+            if (action.getQueenPositionCurrent()[0] == 9 - opponentOriginalQueenPosition.get(0)+1
+                    && action.getQueenPositionCurrent()[1] == opponentOriginalQueenPosition.get(1)-1
+                    && action.getQueenPositionNew()[0] == 9 - opponentNewQueenPosition.get(0)+1
+                    && action.getQueenPositionNew()[1] == opponentNewQueenPosition.get(1)-1
+                    && action.getArrowPosition()[0] == 9 - opponentArrowPosition.get(0)+1
+                    && action.getArrowPosition()[1] == opponentArrowPosition.get(1)-1) {
                 opponentAction = action;
                 return true;
             }
@@ -59,13 +59,15 @@ final class OpponentActionValidator {
 
             if (MCTS_Manager.getNode().getCurrentChildren().containsKey(opponentAction.getId())) {
                 Node child = MCTS_Manager.getNode().getCurrentChildren().get(opponentAction.getId());
-                NodeChildrenGenerator.generateChildrenOfGivenNode(child);
                 MCTS_Manager.setCurrentNode(child);
+                System.out.println("CHOOSING CURRENT NODE");
+                System.out.println("NODE PLAYER TYPE: "+MCTS_Manager.getNode().getPlayerType());
 
             } else {
 
-                MCTS_Manager.setCurrentNode(createNewNodeFromStateUsingAction(MCTS_Manager.getNode().getState(), NodeChildrenGenerator.getPlayerTypeOfChildren(MCTS_Manager.getNode().getPlayerType()), opponentAction));
-
+                MCTS_Manager.setCurrentNode(createNewNodeFromStateUsingAction(MCTS_Manager.getNode().getState(), MCTS_Manager.getNode().getPlayerType(), opponentAction));
+                System.out.println("CHOOSING NEW NODE");
+                System.out.println("NODE PLAYER TYPE: "+MCTS_Manager.getNode().getPlayerType());
             }
         }
     }
@@ -75,7 +77,7 @@ final class OpponentActionValidator {
         int[][] newState = NodeChildrenGenerator.cloneState(state);
 
         NodeChildrenGenerator.getNewStateUsingAction(newState, playerTypeOfAction, action);
-        return new Node(newState, playerTypeOfAction, action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
+        return new Node(newState, NodeChildrenGenerator.getPlayerTypeOfChildren(playerTypeOfAction), action.getQueenPositionCurrent(), action.getQueenPositionNew(), action.getArrowPosition(), action.getId());
     }
 
 
