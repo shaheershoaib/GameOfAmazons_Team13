@@ -31,8 +31,10 @@ public class MCTS_Manager {
        if(node.getTerminal()==0) //Rollout on current node it isn't terminal
        {
            createThreads();
+           //System.out.println("Threads Created!");
            startThreads();
            joinThreads();
+           //System.out.println("Thread are joined!");
            MCTS_Manager.childNodeWithHighestUCB1Score = node.getChildren().peek();
        }
        else System.out.println("We have lost, so we can't do a rollout!");
@@ -76,9 +78,10 @@ public class MCTS_Manager {
    private static void joinThreads() throws InterruptedException {
        for(int i=0; i<threads.length; i++)
        {
+
+               threads[i].join();
            if(threads[i].getNode()!=null)
            {
-               threads[i].join();
                node.getChildren().add(threads[i].getNode());
 
            }

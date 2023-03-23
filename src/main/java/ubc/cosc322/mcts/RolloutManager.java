@@ -15,8 +15,6 @@ final class RolloutManager {
         ArrayList<Action> actions = actionFactory.getActions();
 
 
-        //printArray(node.getState());
-        //System.out.println();
         if(node.getTerminal()==-1) // If the value to check if whether a node is a terminal node or not, then call the method to find it.
             RolloutManager.setTerminalIfNotSet(node, actions);
 

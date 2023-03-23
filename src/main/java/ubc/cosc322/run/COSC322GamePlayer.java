@@ -25,13 +25,7 @@ public class COSC322GamePlayer extends GamePlayer {
 	private int myQueen = -1;
 
 	private int[][] board = null;
-	static Node currentNode = null;
 
-	private ArrayList<Integer> opponentOriginalQueenPosition, opponentNewQueenPosition, opponentArrowPosition;
-	private ArrayList<Action> allPossibleActionsFromCurrentNode;
-	private Action opponentAction;
-	private int occurentBoard=0;
-	private int occurenceStart=0;
 
 
 
@@ -103,8 +97,6 @@ public class COSC322GamePlayer extends GamePlayer {
 
 		switch (messageType) {
 			case GameMessage.GAME_STATE_BOARD:
-				occurentBoard++;
-				System.out.println("Occurence Board: "+occurentBoard);
 				if (gamegui != null) {
 					ArrayList<Integer> board = (ArrayList<Integer>) msgDetails.get(AmazonsGameMessage.GAME_STATE);
 					this.board = initGameBoard();
@@ -115,8 +107,7 @@ public class COSC322GamePlayer extends GamePlayer {
 				break;
 
 			case GameMessage.GAME_ACTION_START:
-				occurenceStart++;
-				System.out.println("Occurence Start: "+occurenceStart);
+
 
 				@SuppressWarnings("unused")
 				String playingWhiteQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_WHITE);
@@ -146,36 +137,40 @@ public class COSC322GamePlayer extends GamePlayer {
 
 				if (gamegui != null) {
 					gamegui.updateGameState(msgDetails);
-					System.out.println("I will now make my move!");
+
 				}
 				if(!isOpponentMoveValid(msgDetails)) {
 					//this.getGameClient().sendMoveMessage(msgDetails);
-					System.out.println("invalid");
+					System.out.println("Opponent has made an invalid move");
 				}
-				printArray();
+				else {
 
-				if(MCTS_Manager.getNode().getTerminal() != 0) {
-					System.out.println("We have lost!");
-					System.out.println("The winner is Queen"+MCTS_Manager.getNode().getTerminal());
-				}
+					if (MCTS_Manager.getNode().getTerminal() != 0) {
+						System.out.println("Our AI has lost!");
+						System.out.println("The winner is Queen" + MCTS_Manager.getNode().getTerminal());
+						gameClient.leaveCurrentRoom();
+						gameClient.logout();
 
-				else
-				{
-					try
-					{
-						performRolloutsOnCurrentNodeFor30Seconds();
+
+					} else {
+						try {
+							System.out.println("AI will now make its move!");
+							performRolloutsOnCurrentNodeFor30Seconds();
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+						makeADecision();
+						printArray();
+						updateGameBoardWithDecision();
+
 					}
-					catch (InterruptedException e)
-					{
-						throw new RuntimeException(e);
-					}
-					makeADecision();
-					printArray();
-					updateGameBoardWithDecision();
-
 				}
-
 				break;
+
+			case AmazonsGameMessage.GAME_STATE_PLAYER_LOST:
+				System.out.println("Our AI has won!");
+				gameClient.leaveCurrentRoom();
+				gameClient.logout();
 		}
 		return true;
 	}
@@ -216,15 +211,19 @@ public class COSC322GamePlayer extends GamePlayer {
 		for (Room room : rooms) {
 			System.out.println(room);
 		}
+		if (gamegui != null) {
+			gamegui.setRoomInformation(gameClient.getRoomList());
+		}
+
 		try (Scanner scanner = new Scanner(System.in)) {
 			System.out.print("Enter a room number");
 			int roomIdx = scanner.nextInt();
 			this.gameClient.joinRoom(rooms.get(roomIdx).getName());
 		}
 
-		if (gamegui != null) {
-			gamegui.setRoomInformation(gameClient.getRoomList());
-		}
+
+
+
 	}
 
 	@Override
@@ -237,7 +236,7 @@ public class COSC322GamePlayer extends GamePlayer {
 	public void performRolloutsOnCurrentNodeFor30Seconds() throws InterruptedException {
 		RolloutThread rolloutThread = new RolloutThread();
 		rolloutThread.start();
-		Thread.sleep(5000);
+		Thread.sleep(200);
 		rolloutThread.stopThread();
 		System.out.println("AI has finished thinking");
 	}
