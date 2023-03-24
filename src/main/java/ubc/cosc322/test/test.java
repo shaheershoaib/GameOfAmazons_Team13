@@ -38,11 +38,14 @@ public class test {
 
 
 
+        int count = 0;
 
     for (int i = 0; i < 2500; i++)
     {
 
         MCTS_Manager.doRollout();
+        count++;
+        System.out.println(count);
 
 
     }

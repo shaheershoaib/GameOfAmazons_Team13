@@ -4,7 +4,9 @@ import ubc.cosc322.actionutil.Action;
 import ubc.cosc322.actionutil.ActionFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Random;
 
 public class MCTS_Manager {
 
@@ -55,6 +57,36 @@ public class MCTS_Manager {
    }
 
 
+    private static ArrayList<Node> getNodesWithHighestUCB1Value()
+    {
+        double highestUCB1Score = node.getChildren().peek().getUcb1Score();
+        ArrayList<Node> nodesWithHighestUCB1Score  = new ArrayList<>();
+        LinkedList<Node> discardedNodes = new LinkedList<>();
+        for(int i=0; i<node.getChildren().size(); i++)
+        {
+            Node childNode = node.getChildren().poll();
+            if(childNode.getUcb1Score() == highestUCB1Score)
+            {
+                nodesWithHighestUCB1Score.add(childNode);
+            }
+            else
+            {
+                discardedNodes.add(childNode);
+            }
+
+
+        }
+
+        for(Node discardedNode: discardedNodes)
+        {
+            node.getChildren().add(discardedNode);
+        }
+        discardedNodes = null;
+
+        return nodesWithHighestUCB1Score;
+
+    }
+
 
    /** HELPER METHODS **/
    private static void createThreads()
@@ -62,32 +94,49 @@ public class MCTS_Manager {
        threads = new MCTS_Thread[numThreads];
    }
 
+
+
    private static void startThreads()
    {
+
+       ArrayList<Node> nodesWithHighestUCB1Value = getNodesWithHighestUCB1Value();
        for(int i=0; i<threads.length; i++)
        {
-           if(node.getChildren()!=null)
+           if(!nodesWithHighestUCB1Value.isEmpty())
            {
-               threads[i] = new MCTS_Thread(node.getChildren().poll(), node.getRollouts());
+               Random random = new Random();
+               int randomIdx = random.nextInt(nodesWithHighestUCB1Value.size());
+               threads[i] = new MCTS_Thread(nodesWithHighestUCB1Value.get(randomIdx), node.getRollouts());
                threads[i].start();
+               nodesWithHighestUCB1Value.remove(randomIdx);
+
+           }
+           else
+               if(!node.getChildren().isEmpty())
+                    nodesWithHighestUCB1Value = getNodesWithHighestUCB1Value();
+       }
+
+       int size = nodesWithHighestUCB1Value.size();
+       for (Node childNode : nodesWithHighestUCB1Value) {
+           node.getChildren().add(childNode);
+       }
+       nodesWithHighestUCB1Value = null;
+   }
+
+
+   private static void joinThreads() throws InterruptedException
+   {
+       for (MCTS_Thread thread : threads) {
+
+           if (thread!=null) {
+               thread.join();
+               node.getChildren().add(thread.getNode());
            }
 
        }
+
    }
 
-   private static void joinThreads() throws InterruptedException {
-       for(int i=0; i<threads.length; i++)
-       {
-
-               threads[i].join();
-           if(threads[i].getNode()!=null)
-           {
-               node.getChildren().add(threads[i].getNode());
-
-           }
-
-       }
-   }
 
    public static void setThreads(int numThreads)
    {

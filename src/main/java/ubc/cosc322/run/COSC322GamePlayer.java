@@ -115,6 +115,7 @@ public class COSC322GamePlayer extends GamePlayer {
 				String playingBlackQueens = (String) msgDetails.get(AmazonsGameMessage.PLAYER_BLACK);
 				setMyQueen(playingBlackQueens);
 				MCTS_Manager.setCurrentNode(new Node(this.board, 2, null, null, null, 0));
+				MCTS_Manager.setThreads(4);
 
 				if (myQueen == 2) {
 
@@ -236,7 +237,7 @@ public class COSC322GamePlayer extends GamePlayer {
 	public void performRolloutsOnCurrentNodeFor30Seconds() throws InterruptedException {
 		RolloutThread rolloutThread = new RolloutThread();
 		rolloutThread.start();
-		Thread.sleep(200);
+		Thread.sleep(10000);
 		rolloutThread.stopThread();
 		System.out.println("AI has finished thinking");
 	}

@@ -22,8 +22,6 @@ public class Node
     private final int[] queenNew;
     private final int[] arrowPosition;
     private int id;
-
-   MCTS_Thread[] threads;
     public Node(int[][] state, int playerType, int[] queenCurrent, int[] queenNew, int[] arrowPosition, int id)
     {
         this.state = state;
@@ -37,6 +35,48 @@ public class Node
         this.rollouts = 1;
 
     }
+/*
+    public double calculateMobilityHeuristic() {
+        ActionFactory actionFactoryCurrent = new ActionFactory(state, playerType);
+        int currentPlayerMoves = actionFactoryCurrent.getActions().size();
+
+        int opponent;
+        if (playerType == 1) {
+            opponent = 2;
+        } else {
+            opponent = 1;
+        }
+
+        ActionFactory actionFactoryOpponent = new ActionFactory(state, opponent);
+        int opponentMoves = actionFactoryOpponent.getActions().size();
+
+        return (currentPlayerMoves - opponentMoves) / (double)(currentPlayerMoves + opponentMoves);
+    }
+
+    public double calculateTerritoryHeuristic() {
+        int currentPlayerTerritory = countTerritory(playerType);
+        int opponent = playerType == 1 ? 2 : 1;
+        int opponentTerritory = countTerritory(opponent);
+
+        return (currentPlayerTerritory - opponentTerritory) / (double)(currentPlayerTerritory + opponentTerritory);
+    }
+
+    public int countTerritory(int player) {
+        int territory = 0;
+
+        for (int row = 0; row < state.length; row++) {
+            for (int col = 0; col < state[row].length; col++) {
+                if (state[row][col] == player) {
+                    territory++;
+                }
+            }
+        }
+
+        return territory;
+    }
+
+*/
+
 
 
     public double getAverageWins(){
@@ -48,69 +88,15 @@ public class Node
         return state;
     }
 
-    public void doRollout() throws InterruptedException
-    {
-    //printArray(state);
-        if(this.terminal == -1)
-        {
-
-            if (this.children.size() == 0)
-            {
-
-                if (this.playerType == 1)
-                    this.terminal = 2;
-                 else this.terminal = 1;
-            }
-                else this.terminal = 0;
-
-        }
 
 
-        if(this.terminal==0) //Rollout on current node it isn't terminal
-        {
-
-            for(int i=0; i< threads.length; i++)
-            {
-                if(children!=null)
-                {
-                    threads[i] = new MCTS_Thread(children.poll(), this.rollouts);
-                    threads[i].start();
-                }
-
-            }
-
-            for(int i=0; i<threads.length; i++)
-            {
-                if(threads[i].getNode()!=null)
-                {
-                    threads[i].join();
-                    children.add(threads[i].getNode());
-
-                }
-
-            }
-        }
-
-        //Node nodeWithHighestUCB1Score = children.poll(); // We only use peek() as we don't actually want the node to be removed
-
-           // doRollout(nodeWithHighestUCB1Score, this.rollouts); // Even though this method returns an integer, this is not useful for the root node. The method only returns an integer
-            //children.add(nodeWithHighestUCB1Score);
-
-
-
-                                          // in order to update totalWins of descendant nodes
-
-    }
-
-
-
-    public void updateUCB1(int parentRollouts) // Calculate the UCB1 score. Current letting C = sqrt(2)
+    public void updateUCB1(int parentRollouts, double punishment) // Calculate the UCB1 score. Current letting C = sqrt(2)
     {
 
         double c = Math.sqrt(2);
         int nodeRollouts = this.rollouts;
         double explorationTerm = c * Math.sqrt(Math.log(parentRollouts) / nodeRollouts);
-        this.ucb1Score = getAverageWins() + explorationTerm;
+        this.ucb1Score = getAverageWins() + explorationTerm - punishment;
 
     }
 
@@ -197,5 +183,7 @@ public class Node
         this.totalWins = totalWins;
     }
 
-
+    public void setUcb1Score(double ucb1Score) {
+        this.ucb1Score = ucb1Score;
+    }
 }
