@@ -27,18 +27,19 @@ final class RolloutManager {
             Node nextNodeToRolloutOn = RolloutManager.getRandomNodeToRolloutOn(node, actions);
 
             int winner =  RolloutManager.rollout(nextNodeToRolloutOn, node.getRollouts()); // Do a rollout, and return the winner
-            double punishment = 0;
             if(winner == node.getPlayerType()) // If the winner was the type of the current node:
             {
                 node.setTotalWins(node.getTotalWins()+1);  // increment its wins by 1 (Ex: if white won and the current node is white, then increment its wins by 1)
+                node.updateUCB1(numRolloutsOnParent, 0);
             }
 
             else
             {
-                punishment = 0.3;
+                node.updateUCB1(numRolloutsOnParent, node.getPunishmentVal());
+                node.updatePunishmentVal();
             }
             // System.out.println("Before: "+node.ucb1Score);
-            node.updateUCB1(numRolloutsOnParent, punishment); // Ensure that the current node has its UCB1 score updated
+            // Ensure that the current node has its UCB1 score updated
             //System.out.println("After: "+node.ucb1Score);
 
             return winner; // Continue to return the winner through the recursive call stack

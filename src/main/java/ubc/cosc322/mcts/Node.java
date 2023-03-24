@@ -11,6 +11,7 @@ public class Node
    private int rollouts;
    private int totalWins;
    private final int playerType; // 1 == White, 2 == Black
+    private double punishmentVal = 0.4;
 
     private final PriorityQueue<Node> children = new PriorityQueue<>(Comparator.comparingDouble(Node::getUcb1Score).reversed());
 
@@ -185,5 +186,14 @@ public class Node
 
     public void setUcb1Score(double ucb1Score) {
         this.ucb1Score = ucb1Score;
+    }
+
+    public void updatePunishmentVal()
+    {
+        this.punishmentVal = this.punishmentVal + 0.5;
+    }
+
+    public double getPunishmentVal() {
+        return punishmentVal;
     }
 }

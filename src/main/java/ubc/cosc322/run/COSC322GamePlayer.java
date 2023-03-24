@@ -237,7 +237,7 @@ public class COSC322GamePlayer extends GamePlayer {
 	public void performRolloutsOnCurrentNodeFor30Seconds() throws InterruptedException {
 		RolloutThread rolloutThread = new RolloutThread();
 		rolloutThread.start();
-		Thread.sleep(10000);
+		Thread.sleep(27000);
 		rolloutThread.stopThread();
 		System.out.println("AI has finished thinking");
 	}
