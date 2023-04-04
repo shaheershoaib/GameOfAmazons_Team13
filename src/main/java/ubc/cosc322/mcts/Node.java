@@ -97,7 +97,7 @@ public class Node
         double c = Math.sqrt(2);
         int nodeRollouts = this.rollouts;
         double explorationTerm = c * Math.sqrt(Math.log(parentRollouts) / nodeRollouts);
-        this.ucb1Score = getAverageWins() + explorationTerm - punishment;
+        this.ucb1Score = getAverageWins() + explorationTerm - 0.4*punishment;
 
     }
 
@@ -190,7 +190,7 @@ public class Node
 
     public void updatePunishmentVal()
     {
-        this.punishmentVal = this.punishmentVal + 0.5;
+        this.punishmentVal = this.punishmentVal + 0.3;
     }
 
     public double getPunishmentVal() {

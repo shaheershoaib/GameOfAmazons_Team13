@@ -29,7 +29,7 @@ public class test {
 
 
         MCTS_Manager.setCurrentNode(node);
-        MCTS_Manager.setThreads(4);
+        MCTS_Manager.setThreads(6);
 
 
           // System.out.println("Not this one");
