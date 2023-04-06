@@ -2,12 +2,12 @@
 The project is worth 30% of the overall grade. All components of the project are worth a certain percent of the project mark:
 - [X] Team Organization: 5%
 - [X] Warm-up Demos: 10%
-- [ ] UML Diagram
-- [ ] Check for Client-Server Commmunication
-- [ ] Ability to start the game as both Black/White
-- [ ] Progress Report: 15%
-- [ ] Demo (via tournament participation): 35%
-- [ ] Report and Implementation (techniques implemented and software-engineering aspects): 35%
+- [X] UML Diagram
+- [X] Check for Client-Server Commmunication
+- [X] Ability to start the game as both Black/White
+- [X] Progress Report: 15%
+- [X] Demo (via tournament participation): 35%
+- [X] Report and Implementation (techniques implemented and software-engineering aspects): 35%
 
 # Goal
 To implement a Java-based Game Player with a graphical user interface that can play with the Game Players developed by other teams. All the teams are required to implement a game client for the Game of the Amazons.
